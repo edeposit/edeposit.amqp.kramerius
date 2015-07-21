@@ -1,0 +1,136 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<find-doc>
+<record>
+<metadata>
+<oai_marc>
+<fixfield id="LDR">-----cam-a22------a-4500</fixfield>
+<fixfield id="FMT">BK</fixfield>
+<fixfield id="001">cpk20051492461</fixfield>
+<fixfield id="003">CZ-PrNK</fixfield>
+<fixfield id="005">20120509091037.0</fixfield>
+<fixfield id="007">ta</fixfield>
+<fixfield id="008">041216s2004----xr-a---e-f----001-0-cze--</fixfield>
+<varfield id="015" i1=" " i2=" ">
+<subfield label="a">cnb001492461</subfield>
+</varfield>
+<varfield id="020" i1=" " i2=" ">
+<subfield label="a">80-251-0225-4 (brož.) :</subfield>
+<subfield label="c">Kč 590,00</subfield>
+</varfield>
+<varfield id="035" i1=" " i2=" ">
+<subfield label="a">(OCoLC)85131856</subfield>
+</varfield>
+<varfield id="040" i1=" " i2=" ">
+<subfield label="a">BOA001</subfield>
+<subfield label="b">cze</subfield>
+<subfield label="d">ABA001</subfield>
+</varfield>
+<varfield id="041" i1="1" i2=" ">
+<subfield label="a">cze</subfield>
+<subfield label="h">eng</subfield>
+</varfield>
+<varfield id="072" i1=" " i2="7">
+<subfield label="a">004.4/.6</subfield>
+<subfield label="x">Programování. Software</subfield>
+<subfield label="2">Konspekt</subfield>
+<subfield label="9">23</subfield>
+</varfield>
+<varfield id="080" i1=" " i2=" ">
+<subfield label="a">004.451.9Unix</subfield>
+<subfield label="2">MRF</subfield>
+</varfield>
+<varfield id="080" i1=" " i2=" ">
+<subfield label="a">004.451</subfield>
+<subfield label="2">MRF</subfield>
+</varfield>
+<varfield id="080" i1=" " i2=" ">
+<subfield label="a">004.42</subfield>
+<subfield label="2">MRF</subfield>
+</varfield>
+<varfield id="080" i1=" " i2=" ">
+<subfield label="a">(035)</subfield>
+<subfield label="2">MRF</subfield>
+</varfield>
+<varfield id="100" i1="1" i2=" ">
+<subfield label="a">Raymond, Eric S.</subfield>
+<subfield label="7">jn20020721375</subfield>
+<subfield label="4">aut</subfield>
+</varfield>
+<varfield id="245" i1="1" i2="0">
+<subfield label="a">Umění programování v UNIXu /</subfield>
+<subfield label="c">Eric S. Raymond</subfield>
+</varfield>
+<varfield id="250" i1=" " i2=" ">
+<subfield label="a">Vyd. 1.</subfield>
+</varfield>
+<varfield id="260" i1=" " i2=" ">
+<subfield label="a">Brno :</subfield>
+<subfield label="b">Computer Press,</subfield>
+<subfield label="c">2004</subfield>
+</varfield>
+<varfield id="300" i1=" " i2=" ">
+<subfield label="a">509 s. :</subfield>
+<subfield label="b">il. ;</subfield>
+<subfield label="c">23 cm</subfield>
+</varfield>
+<varfield id="500" i1=" " i2=" ">
+<subfield label="a">Glosář</subfield>
+</varfield>
+<varfield id="504" i1=" " i2=" ">
+<subfield label="a">Obsahuje bibliografii, bibliografické odkazy a rejstřík</subfield>
+</varfield>
+<varfield id="546" i1=" " i2=" ">
+<subfield label="a">Přeloženo z angličtiny</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="7">
+<subfield label="a">UNIX</subfield>
+<subfield label="7">ph117153</subfield>
+<subfield label="2">czenas</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="7">
+<subfield label="a">operační systémy</subfield>
+<subfield label="7">ph115593</subfield>
+<subfield label="2">czenas</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="7">
+<subfield label="a">programování</subfield>
+<subfield label="7">ph115891</subfield>
+<subfield label="2">czenas</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="9">
+<subfield label="a">UNIX</subfield>
+<subfield label="2">eczenas</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="9">
+<subfield label="a">operating systems</subfield>
+<subfield label="2">eczenas</subfield>
+</varfield>
+<varfield id="650" i1="0" i2="9">
+<subfield label="a">programming</subfield>
+<subfield label="2">eczenas</subfield>
+</varfield>
+<varfield id="655" i1=" " i2="7">
+<subfield label="a">příručky</subfield>
+<subfield label="7">fd133209</subfield>
+<subfield label="2">czenas</subfield>
+</varfield>
+<varfield id="655" i1=" " i2="9">
+<subfield label="a">handbooks, manuals, etc.</subfield>
+<subfield label="2">eczenas</subfield>
+</varfield>
+<varfield id="765" i1="0" i2=" ">
+<subfield label="t">Art of UNIX programming</subfield>
+<subfield label="9">Česky</subfield>
+</varfield>
+<varfield id="910" i1=" " i2=" ">
+<subfield label="a">ABA001</subfield>
+</varfield>
+<varfield id="998" i1=" " i2=" ">
+<subfield label="a">http://aleph.nkp.cz/F/?func=direct&amp;doc_number=001492461&amp;local_base=NKC01</subfield>
+</varfield>
+</oai_marc>
+</metadata>
+</record>
+<session-id>5MVTLC3JXKD6JYJKK2PIFTXIUCK7667ELLKL1PIB9763D1514G</session-id>
+</find-doc>
+ 

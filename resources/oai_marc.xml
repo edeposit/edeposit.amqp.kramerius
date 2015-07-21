@@ -1,0 +1,194 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<present>
+  <record>
+    <record_header>
+      <set_entry>000000001</set_entry>
+    </record_header>
+    <doc_number>000002764</doc_number>
+    <metadata>
+      <oai_marc>
+        <fixfield id="LDR">-----nam-a22------a-4500</fixfield>
+        <fixfield id="FMT">BK</fixfield>
+        <varfield id="BAS" i1=" " i2=" ">
+          <subfield label="a">01</subfield>
+        </varfield>
+        <fixfield id="001">nkc20140002764</fixfield>
+        <fixfield id="003">CZ-PrNK</fixfield>
+        <fixfield id="005">20141023094633.0</fixfield>
+        <fixfield id="007">ta</fixfield>
+        <fixfield id="008">141003s2012----xr-a---e-f----000-0-cze--</fixfield>
+        <varfield id="015" i1=" " i2=" ">
+          <subfield label="a">cnb000002764</subfield>
+        </varfield>
+        <varfield id="020" i1=" " i2=" ">
+          <subfield label="a">978-80-85979-61-9</subfield>
+          <subfield label="q">(online :</subfield>
+          <subfield label="q">pdf)</subfield>
+        </varfield>
+        <varfield id="040" i1=" " i2=" ">
+          <subfield label="a">ABA001</subfield>
+          <subfield label="b">cze</subfield>
+        </varfield>
+        <varfield id="072" i1=" " i2="7">
+          <subfield label="a">793</subfield>
+          <subfield label="x">Společenská zábava</subfield>
+          <subfield label="2">Konspekt</subfield>
+          <subfield label="9">20</subfield>
+        </varfield>
+        <varfield id="080" i1=" " i2=" ">
+          <subfield label="a">82:793.7</subfield>
+          <subfield label="2">MRF</subfield>
+        </varfield>
+        <varfield id="080" i1=" " i2=" ">
+          <subfield label="a">794.021</subfield>
+          <subfield label="2">MRF</subfield>
+        </varfield>
+        <varfield id="080" i1=" " i2=" ">
+          <subfield label="a">(035)</subfield>
+          <subfield label="2">MRF</subfield>
+        </varfield>
+        <varfield id="100" i1="1" i2=" ">
+          <subfield label="a">Nowak, Stanislav</subfield>
+          <subfield label="7">mzk2013767163</subfield>
+          <subfield label="4">aut</subfield>
+        </varfield>
+        <varfield id="245" i1="1" i2="0">
+          <subfield label="a">Dračí doupě plus</subfield>
+          <subfield label="h">[elektronický zdroj] :</subfield>
+          <subfield label="b">fantasy hra na hrdiny.</subfield>
+          <subfield label="p">Příručka povolání bojovník /</subfield>
+          <subfield label="c">autoři: Stanislav Nowak, Lukáš Voborský ; ilustrace: Tomáš Kučerovský</subfield>
+        </varfield>
+        <varfield id="246" i1="3" i2=" ">
+          <subfield label="a">Dračí doupě +</subfield>
+        </varfield>
+        <varfield id="246" i1="3" i2=" ">
+          <subfield label="a">Dračí doupě, verze 1.0</subfield>
+        </varfield>
+        <varfield id="246" i1="3" i2=" ">
+          <subfield label="a">Dračí doupě + bojovník</subfield>
+        </varfield>
+        <varfield id="246" i1="3" i2=" ">
+          <subfield label="a">Bojovník</subfield>
+        </varfield>
+        <varfield id="246" i1="3" i2="0">
+          <subfield label="a">Příručka povolání bojovník</subfield>
+        </varfield>
+        <varfield id="250" i1=" " i2=" ">
+          <subfield label="a">Verze 1.0</subfield>
+        </varfield>
+        <varfield id="260" i1=" " i2=" ">
+          <subfield label="a">[Ostrava] :</subfield>
+          <subfield label="b">Altar,</subfield>
+          <subfield label="c">©2012</subfield>
+        </varfield>
+        <varfield id="300" i1=" " i2=" ">
+          <subfield label="a">64 stran :</subfield>
+          <subfield label="b">ilustrace</subfield>
+        </varfield>
+        <varfield id="336" i1=" " i2=" ">
+          <subfield label="a">text</subfield>
+          <subfield label="b">txt</subfield>
+          <subfield label="2">rdacontent</subfield>
+        </varfield>
+        <varfield id="338" i1=" " i2=" ">
+          <subfield label="a">online zdroj</subfield>
+          <subfield label="b">cr</subfield>
+          <subfield label="2">rdacarrier</subfield>
+        </varfield>
+        <varfield id="490" i1="1" i2=" ">
+          <subfield label="a">B</subfield>
+        </varfield>
+        <varfield id="650" i1="0" i2="7">
+          <subfield label="a">fantasy hry</subfield>
+          <subfield label="7">ph187559</subfield>
+          <subfield label="2">czenas</subfield>
+        </varfield>
+        <varfield id="650" i1="0" i2="7">
+          <subfield label="a">pravidla her</subfield>
+          <subfield label="7">ph184246</subfield>
+          <subfield label="2">czenas</subfield>
+        </varfield>
+        <varfield id="650" i1="0" i2="9">
+          <subfield label="a">fantasy games</subfield>
+          <subfield label="2">eczenas</subfield>
+        </varfield>
+        <varfield id="650" i1="0" i2="9">
+          <subfield label="a">games rules</subfield>
+          <subfield label="2">eczenas</subfield>
+        </varfield>
+        <varfield id="655" i1=" " i2="7">
+          <subfield label="a">příručky</subfield>
+          <subfield label="7">fd133209</subfield>
+          <subfield label="2">czenas</subfield>
+        </varfield>
+        <varfield id="655" i1=" " i2="9">
+          <subfield label="a">handbooks, manuals, etc</subfield>
+          <subfield label="2">eczenas</subfield>
+        </varfield>
+        <varfield id="700" i1="1" i2=" ">
+          <subfield label="a">Voborský, Lukáš</subfield>
+          <subfield label="7">mzk2013767164</subfield>
+          <subfield label="4">aut</subfield>
+        </varfield>
+        <varfield id="700" i1="1" i2=" ">
+          <subfield label="a">Kučerovský, Tomáš,</subfield>
+          <subfield label="d">1974-</subfield>
+          <subfield label="7">mzk2005309095</subfield>
+          <subfield label="4">ill</subfield>
+        </varfield>
+        <varfield id="830" i1=" " i2="0">
+          <subfield label="a">B (Altar)</subfield>
+        </varfield>
+        <varfield id="856" i1="4" i2="0">
+          <subfield label="u">http://edeposit-test.nkp.cz/producents/zizala/epublications/draci-doupe-plus-1/drdplus-bojovnik.pdf</subfield>
+          <subfield label="4">N</subfield>
+        </varfield>
+        <varfield id="856" i1="4" i2="2">
+          <subfield label="u">http://edeposit.nkp.cz/</subfield>
+          <subfield label="4">N</subfield>
+        </varfield>
+        <varfield id="901" i1=" " i2=" ">
+          <subfield label="f">[1. elektron. vyd.]</subfield>
+          <subfield label="o">20140630</subfield>
+        </varfield>
+        <varfield id="910" i1=" " i2=" ">
+          <subfield label="a">ABA001</subfield>
+        </varfield>
+        <varfield id="928" i1="1" i2=" ">
+          <subfield label="a">ALTAR</subfield>
+        </varfield>
+        <varfield id="998" i1=" " i2=" ">
+          <subfield label="a">http://aleph.nkp.cz/F/?func=direct&amp;doc_number=000002764&amp;local_base=CZE-DEP</subfield>
+        </varfield>
+        <varfield id="SKC" i1=" " i2=" ">
+          <subfield label="a">2014</subfield>
+        </varfield>
+        <varfield id="IST" i1="1" i2=" ">
+          <subfield label="a">ox20140616</subfield>
+          <subfield label="b">zizala</subfield>
+        </varfield>
+        <varfield id="IST" i1="1" i2=" ">
+          <subfield label="a">ii20140630</subfield>
+          <subfield label="b">anje</subfield>
+        </varfield>
+        <varfield id="IST" i1="1" i2=" ">
+          <subfield label="a">jp20141023</subfield>
+          <subfield label="b">jasv</subfield>
+        </varfield>
+        <varfield id="HLD" i1=" " i2=" ">
+          <subfield label="l">14/EB 00002</subfield>
+          <subfield label="n">uložení</subfield>
+          <subfield label="s">20140623</subfield>
+          <subfield label="j">e-book</subfield>
+          <subfield label="z">978-80-85979_16062014_00001</subfield>
+        </varfield>
+        <varfield id="STZ" i1=" " i2=" ">
+          <subfield label="a">du20140623</subfield>
+          <subfield label="b">mazi</subfield>
+        </varfield>
+      </oai_marc>
+    </metadata>
+  </record>
+  <session-id>SE7V6PVT7LD7EMG6GJXHSRTM3NG24QHKFD2Y4TL4BJ9IDDJSLM</session-id>
+</present>
