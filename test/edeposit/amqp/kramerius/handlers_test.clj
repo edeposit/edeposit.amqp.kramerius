@@ -28,3 +28,15 @@
     )
   )
 
+(deftest message-id-test
+  (testing "message-id-test"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (h/save-request-payload nil payload))
+    (def message-id (h/message-id tmpdir))
+
+    (is (-> message-id (= (.toString tmpdir))))
+
+    (fs/delete-dir tmpdir)
+    )
+  )
+

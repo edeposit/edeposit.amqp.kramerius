@@ -35,9 +35,9 @@
   )
 
 (defn message-id 
-  ""
-  [metadata payload]
-  
+  "Message ID is the same as workdir name. It is the easiest way to distinct messages."
+  [workdir]
+  (-> tmpdir .toString)
   )
 
 (defn parse-and-export [metadata ^bytes payload]

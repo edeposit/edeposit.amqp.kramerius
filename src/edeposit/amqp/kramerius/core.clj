@@ -35,7 +35,7 @@
   (def workdir-obs (->> requests-obs
                         (rx/map h/save-request-payload)
                         ))
-  (def message-id-obs (->> requests-obs
+  (def message-id-obs (->> workdir-obs
                            (rx/map h/message-id)
                            ))
   )
