@@ -13,7 +13,9 @@
 
     (is (.exists tmpdir))
     (is (.exists (io/file tmpdir "marcxml.xml")))
+    (is (.exists (io/file tmpdir "marcxml.xml.b64")))
     (is (.exists (io/file tmpdir "robotandbaby.pdf")))
+    (is (.exists (io/file tmpdir "robotandbaby.pdf.b64")))
     (is (.exists (io/file tmpdir "filename")))
     (is (.exists (io/file tmpdir "uuid")))
 

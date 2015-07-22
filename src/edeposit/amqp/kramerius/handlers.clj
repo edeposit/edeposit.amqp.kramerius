@@ -24,11 +24,20 @@
                      (io/file tmpdir)
                      )
     )
+  (.concat (.toString data-file) ".b64")
   (spit marcxml-file (Base64/decodeBase64 (:b64_marcxml msg)))
+  (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
   (spit data-file (Base64/decodeBase64 (:b64_data msg)))
+  (spit (-> data-file .toString (.concat ".b64")) (:b64_data msg))
   (spit (io/file tmpdir "uuid") (:uuid msg))
   (spit (io/file tmpdir "filename") (:filename  msg))
   tmpdir
+  )
+
+(defn message-id 
+  ""
+  [metadata payload]
+  
   )
 
 (defn parse-and-export [metadata ^bytes payload]
@@ -54,7 +63,7 @@
 
 (defn response-properties [metadata]
   {:headers {"UUID" (-> metadata :headers (get "UUID"))}
-   :content-type "edeposit/kramerius-response"
+   :content-type "edeposit/export-to-kramerius-response"
    :content-encoding "application/json"
    :persistent true
    }
