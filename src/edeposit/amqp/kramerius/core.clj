@@ -31,15 +31,21 @@
   
   ## SSH export response
   "
-  [requests-obs marcxml-to-mods-response-obs ssh-response-obs]
-  (def workdir-obs (->> requests-obs
-                        (rx/map h/save-request-payload)
+  [request-obs marcxml-to-mods-response-obs ssh-response-obs]
+  (def workdir-obs (->> request-obs
+                        (rx/map h/request-with-tmpdir)
+                        (rx/map h/save-request)
                         ))
-  (def message-id-obs (->> workdir-obs
-                           (rx/map h/message-id)
-                           ))
-  )
 
+  (def requests-to-marcxml2mods-obs (->> workdir-obs
+                                         (rx/map h/prepare-marcxml2mods-request)
+                                         ))
+  (def requests-to-ssh-obs nil)
+
+  { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
+   :requests-to-ssh requests-to-ssh-obs
+   }
+  )
 
 (defn -main [& args]
     (let [ [options args banner] 

@@ -4,6 +4,7 @@
             [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
+            [clojure.pprint :as pp]
             )
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -12,32 +13,64 @@
   (add-hook 'after-save-hook 'restart-app nil t)
 )
 
-(defn save-request-payload 
+(defn request-with-tmpdir
+  "It creates tmpdir and add it to request data"
+  [[metadata payload]]
+  (let [tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
+    [[metadata payload] tmpdir]
+    )
+  )
+
+(defn save-request
   "it returns name of a directory where payload is saved"
-  [metadata payload]
+  [[[metadata payload] workdir]]
   (def msg (json/read-str (String. payload) :key-fn keyword))
-  (def tmpdir (fs/temp-dir "export-to-kramerius-request-"))
-  (def marcxml-file (io/file tmpdir "marcxml.xml"))
+  (def marcxml-file (io/file workdir "oai_marc.xml"))
   (def data-file (->> (:filename msg)
                      io/file
                      .getName
-                     (io/file tmpdir)
+                     (io/file workdir)
                      )
     )
-  (.concat (.toString data-file) ".b64")
-  (spit marcxml-file (Base64/decodeBase64 (:b64_marcxml msg)))
+
+  (log/info "save export request to" workdir)  
   (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
-  (spit data-file (Base64/decodeBase64 (:b64_data msg)))
   (spit (-> data-file .toString (.concat ".b64")) (:b64_data msg))
-  (spit (io/file tmpdir "uuid") (:uuid msg))
-  (spit (io/file tmpdir "filename") (:filename  msg))
-  tmpdir
+  (spit (io/file workdir "uuid") (:uuid msg))
+  (spit (io/file workdir "filename") (:filename  msg))
+
+  (with-open [out (io/output-stream marcxml-file)]
+    (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
+  (with-open [out (io/output-stream data-file)]
+    (.write out (Base64/decodeBase64 (:b64_data msg))))
+
+  workdir
   )
 
-(defn message-id 
-  "Message ID is the same as workdir name. It is the easiest way to distinct messages."
+(defn prepare-marcxml2mods-request
   [workdir]
-  (-> tmpdir .toString)
+  (log/info "prepare marcxml2mods request at" workdir)
+  [{:uuid (.toString workdir)}
+   {:marc_xml (slurp (io/file workdir "oai_marc.xml"))
+    :uuid (slurp (io/file workdir "uuid"))
+    }
+   ]
+  )
+
+(defn save-marcxml2mods-response
+  [[metadata payload]]
+  (let [uuid (-> metadata :headers (get "UUID"))
+        workdir (io/file uuid)]
+    (log/info "save marcxml2mods response into" workdir)
+    (spit (io/file workdir "marcxml2mods-response-metadata.clj") metadata)
+    (spit (io/file workdir "marcxml2mods-response-payload.json") payload)
+
+    workdir
+    )
+  )
+
+(defn make-foxml
+  [workdir]
   )
 
 (defn parse-and-export [metadata ^bytes payload]
@@ -82,13 +115,3 @@
   (lb/ack (:channel kramerius) (:delivery-tag metadata))
   (log/info "message ack")
   )
-
-
-
-
-
-
-
-
-
-
