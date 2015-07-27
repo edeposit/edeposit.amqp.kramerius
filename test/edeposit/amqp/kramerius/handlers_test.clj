@@ -4,6 +4,9 @@
             [me.raynes.fs :as fs]
             [clojure.java.io :as io]
             [clojure.pprint :as pp]
+            [clojure.data.xml :as xml]
+            [clojure.zip :as zip]
+            [clojure.data.zip.xml :as zx]
             )
   )
 
@@ -62,10 +65,10 @@
 
     (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
           payload (slurp "resources/marcxml2mods-response-payload.json")
-          new-headers (-> metadata :headers (assoc "UUID" (.toString tmpdir)))
-          new-metadata (-> metadata (assoc :headers new-headers))
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+          [mods_files response-tmpdir] (h/save-marcxml2mods-response [actual-metadata payload])
           ]
-      (def response-tmpdir (h/save-marcxml2mods-response [new-metadata payload]))
       (is (= (.toString response-tmpdir)
              (.toString tmpdir)
              ))
@@ -73,7 +76,89 @@
       (is (= (.exists (io/file response-tmpdir "marcxml2mods-response-payload.json"))))
       (is (= (slurp (io/file response-tmpdir "marcxml2mods-response-payload.json"))
              (slurp "resources/marcxml2mods-response-payload.json")))
+
+      (isa? vector mods_files)
+      (is (= (count mods_files) 1))
+      
+      (doseq [mods mods_files]
+        (is (.contains mods "<?xml version="))
+        (is (.contains mods "<mods:mods version="))
+        (is (.contains mods "Umění programování v UNIXu"))
+        )
       )
+
+    (fs/delete-dir tmpdir)
+    )
+  )
+
+(deftest parse-mods-test
+  (testing "parse mods files"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
+
+    (h/save-request  [[nil payload] tmpdir])
+
+    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+          payload (slurp "resources/marcxml2mods-response-payload.json")
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+          
+          [mods response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
+                                     h/parse-mods-files
+                                     )
+          ]
+
+      (is (= (.toString response-tmpdir)
+             (.toString tmpdir)
+             ))
+
+      (isa? vector mods)
+      (is (= (count mods) 1))
+      
+      (doseq [root (map zip/xml-zip mods)]
+        (is (=  (zx/xml1-> root :titleInfo :title zx/text)
+                "Umění programování v UNIXu"))
+        (is (=  (zx/xml1-> root :name :namePart zx/text) 
+                "Raymond, Eric S."))
+        )
+      )
+
+    (fs/delete-dir tmpdir)
+    )
+  )
+
+(deftest mods->dc-test
+  (testing "transformation MODS -> OAI DC"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
+
+    (h/save-request  [[nil payload] tmpdir])
+
+    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+          payload (slurp "resources/marcxml2mods-response-payload.json")
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+          
+          [oai_dcs response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
+                                        h/parse-mods-files
+                                        h/mods->oai_dcs
+                                        )
+          ]
+
+      (is (= (.toString response-tmpdir)
+             (.toString tmpdir)
+             ))
+
+      (isa? vector oai_dcs)
+      (is (= (count oai_dcs) 1))
+      
+      (doseq [root (map zip/xml-zip oai_dcs)]
+        (is (=  (zx/xml1-> root :dc:title  zx/text)  "Umění programování v UNIXu"))
+        (is (=  (zx/xml1-> root :dc:date zx/text) "2004"))
+        (is (=  (set (zx/xml-> root :dc:identifier zx/text))  
+                #{"uuid:asd" "ccnb:cnb001492461" "isbn:80-251-0225-4 (brož.)" "oclc:85131856"})))
+      )
+
     (fs/delete-dir tmpdir)
     )
   )

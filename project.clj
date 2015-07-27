@@ -16,6 +16,8 @@
                  [reloaded.repl "0.1.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [danlentz/clj-uuid "0.1.6"]
+                 [org.clojure/data.xml "0.0.8"]
+                 [org.clojure/data.zip "0.1.1"]
                  ]
   :main edeposit.amqp.kramerius.core
   :profiles {:dev {:plugins [

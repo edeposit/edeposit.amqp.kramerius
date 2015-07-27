@@ -5,6 +5,9 @@
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
             [clojure.pprint :as pp]
+            [clojure.data.json :as json]
+            [clojure.data.xml :as xml]
+            [edeposit.amqp.kramerius.xml.mods :as mods]
             )
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -64,14 +67,28 @@
     (log/info "save marcxml2mods response into" workdir)
     (spit (io/file workdir "marcxml2mods-response-metadata.clj") metadata)
     (spit (io/file workdir "marcxml2mods-response-payload.json") payload)
-
-    workdir
+    (let [ mods_files (-> payload 
+         (json/read-str :key-fn keyword) 
+         :mods_files)]
+      [mods_files workdir]
+      )
     )
   )
+
+(defn parse-mods-files
+  "takes strings and returns xml root for each xml string"
+  [[mods_files workdir]]
+  [(map xml/parse-str mods_files) workdir])
+
+(defn mods->oai_dcs
+  [[mods workdir]]
+  [(map mods/mods->oai_dc mods) workdir])
 
 (defn make-foxml
   [workdir]
   )
+
+
 
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
