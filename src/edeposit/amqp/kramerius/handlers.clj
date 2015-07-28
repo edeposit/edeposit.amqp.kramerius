@@ -7,7 +7,9 @@
             [clojure.pprint :as pp]
             [clojure.data.json :as json]
             [clojure.data.xml :as xml]
+            [clj-time.core :as t]
             [edeposit.amqp.kramerius.xml.mods :as mods]
+            [edeposit.amqp.kramerius.xml.foxml :as f]
             )
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -84,11 +86,28 @@
   [[mods workdir]]
   [(map mods/mods->oai_dc mods) workdir])
 
+
 (defn make-foxml
-  [workdir]
+  [[mods workdir] [oai_dcs workdir-1]]
+  {:pre [(= workdir workdir-1)]}
+  (let [uuid (slurp (io/file workdir "uuid"))
+        foxml-dir (io/file workdir uuid)
+        ]
+    (.mkdir foxml-dir)
+    (let [foxml (f/foxml mods oai_dcs 
+                         {:uuid uuid :label "ahoj" 
+                          :created (t/now)
+                          :last-modified (t/now)
+                          })
+          out-file (io/file workdir uuid (str uuid ".xml"))
+          ]
+      ;(pp/pprint foxml)
+      (with-open [out (io/writer out-file)]
+        (xml/emit foxml out))
+      [uuid workdir]
+      )
+    )
   )
-
-
 
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 

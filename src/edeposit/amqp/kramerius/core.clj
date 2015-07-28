@@ -32,19 +32,21 @@
   ## SSH export response
   "
   [request-obs marcxml-to-mods-response-obs ssh-response-obs]
-  (def workdir-obs (->> request-obs
-                        (rx/map h/request-with-tmpdir)
-                        (rx/map h/save-request)
-                        ))
-
-  (def requests-to-marcxml2mods-obs (->> workdir-obs
-                                         (rx/map h/prepare-marcxml2mods-request)
-                                         ))
-  (def requests-to-ssh-obs nil)
-
-  { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
-   :requests-to-ssh requests-to-ssh-obs
-   }
+  (let  [ workdir-obs (->> request-obs
+                           (rx/map h/request-with-tmpdir)
+                           (rx/map h/save-request))
+         requests-to-marcxml2mods-obs (->> workdir-obs
+                                           (rx/map h/prepare-marcxml2mods-request))
+         mods-files-obs (->> marcxml-to-mods-response-obs
+                                  (rx/map h/save-marcxml2mods-response)
+                                  (rx/map h/parse-mods-files)
+                                  )
+         requests-to-ssh-obs (->> mods-files-obs
+                                  (rx/map h/mods->oai_dcs)
+                                  (rx/map h/make-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
+                                  )]
+    { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
+     :requests-to-ssh requests-to-ssh-obs})
   )
 
 (defn -main [& args]

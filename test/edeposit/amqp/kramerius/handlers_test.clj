@@ -114,14 +114,11 @@
 
       (isa? vector mods)
       (is (= (count mods) 1))
-      
       (doseq [root (map zip/xml-zip mods)]
         (is (=  (zx/xml1-> root :titleInfo :title zx/text)
                 "Umění programování v UNIXu"))
         (is (=  (zx/xml1-> root :name :namePart zx/text) 
-                "Raymond, Eric S."))
-        )
-      )
+                "Raymond, Eric S."))))
 
     (fs/delete-dir tmpdir)
     )
@@ -152,11 +149,43 @@
       (isa? vector oai_dcs)
       (is (= (count oai_dcs) 1))
       
-      (doseq [root (map zip/xml-zip oai_dcs)]
+      (doseq [root (map (comp zip/xml-zip xml/sexp-as-element) oai_dcs)]
         (is (=  (zx/xml1-> root :dc:title  zx/text)  "Umění programování v UNIXu"))
         (is (=  (zx/xml1-> root :dc:date zx/text) "2004"))
         (is (=  (set (zx/xml-> root :dc:identifier zx/text))  
-                #{"uuid:asd" "ccnb:cnb001492461" "isbn:80-251-0225-4 (brož.)" "oclc:85131856"})))
+                #{"uuid:asd" "ccnb:cnb001492461" "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))))
+
+    (fs/delete-dir tmpdir))
+  )
+
+
+(deftest foxml
+  (testing "make FOXML"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
+
+    (h/save-request  [[nil payload] tmpdir])
+
+    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+          payload (slurp "resources/marcxml2mods-response-payload.json")
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+          [mods tmpdir-0] (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
+          [oai_dcs tmpdir-1] (h/mods->oai_dcs [mods tmpdir-0])
+          [fname result-tmpdir] (h/make-foxml [mods tmpdir-0] [oai_dcs tmpdir-1])
+          uuid (slurp (io/file result-tmpdir "uuid"))
+          ]
+
+      (is (= (.toString result-tmpdir)
+             (.toString tmpdir)))
+      (is (.exists (io/file result-tmpdir uuid)))
+      (is (.isDirectory (io/file result-tmpdir uuid)))
+      (let [root (-> (io/file result-tmpdir uuid (str uuid ".xml"))
+                     io/input-stream
+                     xml/parse)]
+        )
+      ;(pp/pprint result-tmpdir)
+      ;(println (slurp (io/file result-tmpdir uuid (str uuid ".xml"))))
       )
 
     (fs/delete-dir tmpdir)
