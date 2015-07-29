@@ -182,7 +182,9 @@
       (is (.isDirectory (io/file result-tmpdir uuid)))
       (let [root (-> (io/file result-tmpdir uuid (str uuid ".xml"))
                      io/input-stream
-                     xml/parse)]
+                     xml/parse
+                     zip/xml-zip
+                     )]
         )
       ;(pp/pprint result-tmpdir)
       ;(println (slurp (io/file result-tmpdir uuid (str uuid ".xml"))))
