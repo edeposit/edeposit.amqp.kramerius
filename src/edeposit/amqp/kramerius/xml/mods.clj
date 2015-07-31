@@ -5,6 +5,11 @@
             )
   )
 
+(defn with-urnnbn-identifier
+  "add add <mods:identifier type='urnnbn'>cnb001492461</mods:identifier>"
+  [root urnnbn]
+  (assoc-in root [:content] (into (-> root :content) [(xml/element :identifier {:type "urnnbn"} urnnbn )])))
+
 (defn mods->oai_dc
   "transforms xml mods into oai_dc. Returns xml/root structure."
   [root]
@@ -52,11 +57,11 @@
      (for [relation (concat (root-> :relatedItem :titleInfo :title zx/text)
                             (root-> :relatedItem :location :url zx/text))]
        [:dc:relation {:xmlns:dc "http://purl.org/dc/elements/1.1/"} relation])
-      (for [coverage (concat (root-> :subject :temporal zx/text)
-                             (root-> :subject :geographic zx/text)
-                             (root-> :subject :hyerarchicalGeographic zx/text)
-                             (root-> :subject :cartographics :coordinates zx/text))]
-        [:dc:coverage {:xmlns:dc "http://purl.org/dc/elements/1.1/"} coverage])
+     (for [coverage (concat (root-> :subject :temporal zx/text)
+                            (root-> :subject :geographic zx/text)
+                            (root-> :subject :hyerarchicalGeographic zx/text)
+                            (root-> :subject :cartographics :coordinates zx/text))]
+       [:dc:coverage {:xmlns:dc "http://purl.org/dc/elements/1.1/"} coverage])
      ]
     )
   )
