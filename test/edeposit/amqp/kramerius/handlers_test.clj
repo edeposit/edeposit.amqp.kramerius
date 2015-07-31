@@ -32,26 +32,38 @@
     (def result (h/save-request  [[nil payload] tmpdir]))
 
     (is (.exists tmpdir))
+    (is (.exists (io/file tmpdir "uuid")))
+    (is (.exists (io/file tmpdir "urnnbn")))
     (is (.exists (io/file tmpdir "oai_marc.xml")))
     (is (.exists (io/file tmpdir "oai_marc.xml.b64")))
-    (is (.exists (io/file tmpdir "robotandbaby.pdf")))
-    (is (.exists (io/file tmpdir "robotandbaby.pdf.b64")))
-    (is (.exists (io/file tmpdir "filename")))
-    (is (.exists (io/file tmpdir "uuid")))
 
-    (is (= (fs/size (io/file tmpdir "oai_marc.xml"))
-           (fs/size (io/file "resources" "oai_marc.xml"))
-           ))
+    (is (.exists (io/file tmpdir "img_full")))
+    (is (.exists (io/file tmpdir "img_full" "robotandbaby.pdf")))
+    (is (.exists (io/file tmpdir "img_full" "mimetype")))
+    (is (.exists (io/file tmpdir "img_full" "filename")))
 
-    (is (= (fs/size (io/file tmpdir "robotandbaby.pdf"))
-           (fs/size (io/file "resources" "robotandbaby.pdf"))
-           ))
+    (is (.exists (io/file tmpdir "img_preview")))
+    (is (.exists (io/file tmpdir "img_preview" "robotandbaby_001.jpg")))
+    (is (.exists (io/file tmpdir "img_preview" "mimetype")))
+    (is (.exists (io/file tmpdir "img_preview" "filename")))
     
-    (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61"
-           (slurp (io/file tmpdir "uuid"))))
-    (is (-> (slurp (io/file tmpdir "filename"))
-            (= "resources/robotandbaby.pdf")
-            ))
+    (is (= (fs/size (io/file tmpdir "oai_marc.xml"))
+           (fs/size (io/file "resources" "oai_marc.xml"))))
+
+    (is (= (fs/size (io/file tmpdir "img_full" "robotandbaby.pdf"))
+           (fs/size (io/file "resources" "robotandbaby.pdf"))))
+
+    (is (= (fs/size (io/file tmpdir "img_preview" "robotandbaby_001.jpg"))
+           (fs/size (io/file "resources" "robotandbaby_001.jpg"))))
+    
+    (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61" (slurp (io/file tmpdir "uuid"))))
+    (is (= "urn:nbn:cz:mzk-0005ol" (slurp (io/file tmpdir "urnnbn"))))
+
+    (is (= "robotandbaby.pdf" (slurp (io/file tmpdir "img_full" "filename"))))
+    (is (= "application/pdf" (slurp (io/file tmpdir "img_full" "mimetype"))))
+    (is (= "robotandbaby_001.jpg" (slurp (io/file tmpdir "img_preview" "filename"))))
+    (is (= "image/jpeg" (slurp (io/file tmpdir "img_preview" "mimetype"))))
+
     (fs/delete-dir tmpdir)
     )
   )
@@ -138,6 +150,7 @@
           
           [oai_dcs response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
                                         h/parse-mods-files
+                                        h/add-urnnbn-to-first-mods
                                         h/mods->oai_dcs
                                         )
           ]
@@ -153,11 +166,45 @@
         (is (=  (zx/xml1-> root :dc:title  zx/text)  "Umění programování v UNIXu"))
         (is (=  (zx/xml1-> root :dc:date zx/text) "2004"))
         (is (=  (set (zx/xml-> root :dc:identifier zx/text))  
-                #{"uuid:asd" "ccnb:cnb001492461" "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))))
+                #{"urnnbn:urn:nbn:cz:mzk-0005ol" "uuid:asd" "ccnb:cnb001492461" 
+                  "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))))
 
     (fs/delete-dir tmpdir))
   )
 
+(deftest save-img-files-test
+  (testing "save img files to FOXML dir"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
+
+    (h/save-request  [[nil payload] tmpdir])
+
+    (let [metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+          payload (slurp "resources/marcxml2mods-response-payload.json")
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+
+          [full-file preview-file result-tmpdir] 
+          (-> (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
+              h/save-img-files)
+
+          uuid (slurp (io/file result-tmpdir "uuid"))]
+
+      (is (= (.toString result-tmpdir) (.toString tmpdir)))
+      (is (.isDirectory (io/file result-tmpdir uuid)))
+      (is (.isDirectory (io/file result-tmpdir uuid "img")))
+
+      (is (.exists (io/file result-tmpdir uuid "img" (-> full-file :filename))))
+      (is (= :img_full (-> full-file :img-type)))
+      (is (= "application/pdf" (-> full-file :mime-type)))
+      
+      (is (.exists (io/file result-tmpdir uuid "img" (-> preview-file :filename))))
+      (is (= :img_preview (-> preview-file :img-type)))
+      (is (= "image/jpeg" (-> preview-file :mime-type))))
+    
+    (fs/delete-dir tmpdir)
+    )
+  )
 
 (deftest foxml
   (testing "make FOXML"
@@ -172,7 +219,8 @@
                                               (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
           [mods tmpdir-0] (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
           [oai_dcs tmpdir-1] (h/mods->oai_dcs [mods tmpdir-0])
-          [fname result-tmpdir] (h/make-foxml [mods tmpdir-0] [oai_dcs tmpdir-1])
+          [full-file preview-file tmpdir-2] (h/save-img-files [mods tmpdir-0])
+          [fname result-tmpdir] (h/make-foxml [mods tmpdir-0] [oai_dcs tmpdir-1] [full-file preview-file tmpdir-2] "/var/fedora/import/")
           uuid (slurp (io/file result-tmpdir "uuid"))
           ]
 
@@ -185,11 +233,29 @@
                      xml/parse
                      zip/xml-zip
                      )]
+        ;(def root (-> (io/file "/tmp/aa.xml") io/input-stream xml/parse zip/xml-zip))
+        (let [ref (zx/xml1-> root :datastream [(zx/attr= :ID "IMG_FULL")] :datastreamVersion :contentLocation (zx/attr :REF)) ]
+          (is (= (.toString (io/file "file:/var/fedora/import/" uuid "img" (-> full-file :filename))) ref))
+          )
+        (let [ref (zx/xml1-> root :datastream [(zx/attr= :ID "IMG_PREVIEW")] :datastreamVersion :contentLocation (zx/attr :REF)) ]
+          (is (= (.toString (io/file "file:/var/fedora/import/" uuid "img" (-> preview-file :filename))) ref))
+          )
         )
+
       ;(pp/pprint result-tmpdir)
       ;(println (slurp (io/file result-tmpdir uuid (str uuid ".xml"))))
       )
 
-    (fs/delete-dir tmpdir)
+    ;(fs/delete-dir tmpdir)
     )
   )
+
+
+
+
+
+
+
+
+
+
