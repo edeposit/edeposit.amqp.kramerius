@@ -3,6 +3,7 @@
             [clojure.data.zip.xml :as zx]
             [clojure.zip :as zip]
             [clojure.pprint :as pp]
+            [clojure.java.io :as io]
             )
   )
 
@@ -18,10 +19,7 @@
 
 (defn foxml
   "transforms xml mods into oai_dc. Returns xml/root structure."
-  [mods dcs {:keys [uuid label created last-modified]}]
-  (let [mods-0 (first mods)
-        ]
-    )
+  [mods dcs full-file preview-file {:keys [uuid label created last-modified fedora-import-dir]}]
   (xml/sexp-as-element
    [:foxml:digitalObject  {:PID uuid :VERSION "1.1"
                            :xsi:schemaLocation "info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd" 
@@ -48,22 +46,18 @@
        [:foxml:xmlContent 
         [:mods:modsCollection {:xmlns:mods "http://www.loc.gov/mods/v3"}
          [:mods:mods {:version "3.3"}
-          (map to-sexp (:content mods-one))]]]]
-      )
+          (map to-sexp (:content mods-one))]]]])
+    [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_FULL"}
+     [:foxml:datastreamVersion {:MIMETYPE (-> full-file :mime-type) :CREATED created :ID "IMG_FULL.0"}
+      [:foxml:contentLocation 
+       {:REF (str "file:" (.toString (io/file fedora-import-dir uuid "img" (-> full-file :filename))))
+        :TYPE "URL"}]]]
+
+    [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_PREVIEW"}
+     [:foxml:datastreamVersion {:MIMETYPE (-> preview-file :mime-type) :CREATED created :ID "IMG_PREVIEW.0"}
+      [:foxml:contentLocation 
+       {:REF (str "file:" (.toString (io/file fedora-import-dir uuid "img" (-> preview-file :filename))))
+        :TYPE "URL"}]]]
     ]
    )
   )
-
-(defn mods->rdf
-  [root]
-  )
-
-
-
-
-
-
-
-
-
-
