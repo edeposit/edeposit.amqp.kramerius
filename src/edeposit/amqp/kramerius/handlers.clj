@@ -14,6 +14,7 @@
   (:import [org.apache.commons.codec.binary Base64])
   )
 
+; Michal Merka 736 539 653
 (comment ;; hook for emacs
   (add-hook 'after-save-hook 'restart-app nil t)
 )
@@ -22,35 +23,40 @@
   "It creates tmpdir and add it to request data"
   [[metadata payload]]
   (let [tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
-    [[metadata payload] tmpdir]
-    )
-  )
+    [[metadata payload] tmpdir]))
 
 (defn save-request
   "it returns name of a directory where payload is saved"
   [[[metadata payload] workdir]]
   (def msg (json/read-str (String. payload) :key-fn keyword))
   (def marcxml-file (io/file workdir "oai_marc.xml"))
-  (def data-file (->> (:filename msg)
-                     io/file
-                     .getName
-                     (io/file workdir)
-                     )
-    )
 
   (log/info "save export request to" workdir)  
   (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
-  (spit (-> data-file .toString (.concat ".b64")) (:b64_data msg))
   (spit (io/file workdir "uuid") (:uuid msg))
-  (spit (io/file workdir "filename") (:filename  msg))
+  (spit (io/file workdir "urnnbn") (:urnnbn msg))
 
   (with-open [out (io/output-stream marcxml-file)]
     (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
-  (with-open [out (io/output-stream data-file)]
-    (.write out (Base64/decodeBase64 (:b64_data msg))))
 
-  workdir
-  )
+  (let [out-dir (io/file workdir "img_full")
+        data (-> msg :img_full)
+        ]
+    (.mkdir out-dir)
+    (spit (io/file out-dir "mimetype") (-> data :mimetype))
+    (spit (io/file out-dir "filename") (-> data :filename))
+    (with-open [out (io/output-stream (io/file out-dir (-> data :filename)))]
+      (.write out (Base64/decodeBase64 (-> data :b64_data)))))
+
+  (let [out-dir (io/file workdir "img_preview")
+        data (-> msg :img_preview)]
+    (.mkdir out-dir)
+    (spit (io/file out-dir "mimetype") (-> data :mimetype))
+    (spit (io/file out-dir "filename") (-> data :filename))
+    (with-open [out (io/output-stream (io/file out-dir (-> data :filename)))]
+      (.write out (Base64/decodeBase64 (-> data :b64_data)))))
+
+  workdir)
 
 (defn prepare-marcxml2mods-request
   [workdir]
@@ -58,9 +64,7 @@
   [{:uuid (.toString workdir)}
    {:marc_xml (slurp (io/file workdir "oai_marc.xml"))
     :uuid (slurp (io/file workdir "uuid"))
-    }
-   ]
-  )
+    }])
 
 (defn save-marcxml2mods-response
   [[metadata payload]]
@@ -72,15 +76,39 @@
     (let [ mods_files (-> payload 
          (json/read-str :key-fn keyword) 
          :mods_files)]
-      [mods_files workdir]
-      )
-    )
-  )
+      [mods_files workdir])))
 
 (defn parse-mods-files
   "takes strings and returns xml root for each xml string"
   [[mods_files workdir]]
   [(map xml/parse-str mods_files) workdir])
+
+(defn save-img-files
+  [[mods_files workdir]]
+  (let [uuid (slurp (io/file workdir "uuid"))
+        slurp-img-full (comp slurp (partial io/file workdir "img_full"))
+        slurp-img-preview (comp slurp (partial io/file workdir "img_preview"))
+        ]
+    (.mkdir (io/file workdir uuid))
+    (.mkdir (io/file workdir uuid "img"))
+    (fs/copy (io/file workdir "img_full" (slurp-img-full "filename")) 
+             (io/file workdir uuid "img" (slurp-img-full "filename")))
+    (fs/copy (io/file workdir "img_preview" (slurp-img-preview "filename")) 
+             (io/file workdir uuid "img" (slurp-img-preview "filename")))
+    [{:img-type :img_full
+      :mime-type (slurp-img-full "mimetype")
+      :filename (slurp-img-full "filename")
+      }
+     {:img-type :img_preview
+      :mime-type (slurp-img-preview "mimetype")
+      :filename (slurp-img-preview "filename")
+      } 
+     workdir]))
+
+(defn add-urnnbn-to-first-mods
+  [[mods workdir]]
+  (let [urnnbn (slurp (io/file workdir "urnnbn"))]
+    [(into [(mods/with-urnnbn-identifier (first mods) urnnbn)] (rest mods))  workdir]))
 
 (defn mods->oai_dcs
   [[mods workdir]]
@@ -88,26 +116,23 @@
 
 
 (defn make-foxml
-  [[mods workdir] [oai_dcs workdir-1]]
-  {:pre [(= workdir workdir-1)]}
+  [[mods workdir] [oai_dcs workdir-1] [full-file preview-file workdir-2] fedora-import-dir]
+  {:pre [(= workdir workdir-1 workdir-2)]}
   (let [uuid (slurp (io/file workdir "uuid"))
         foxml-dir (io/file workdir uuid)
         ]
-    (.mkdir foxml-dir)
-    (let [foxml (f/foxml mods oai_dcs 
+    (let [foxml (f/foxml mods oai_dcs full-file preview-file
                          {:uuid uuid :label "ahoj" 
                           :created (t/now)
                           :last-modified (t/now)
+                          :fedora-import-dir fedora-import-dir
                           })
           out-file (io/file workdir uuid (str uuid ".xml"))
           ]
       ;(pp/pprint foxml)
       (with-open [out (io/writer out-file)]
         (xml/emit foxml out))
-      [uuid workdir]
-      )
-    )
-  )
+      [uuid workdir])))
 
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
