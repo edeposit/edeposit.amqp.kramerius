@@ -206,7 +206,7 @@
     )
   )
 
-(deftest foxml
+(deftest foxml-test
   (testing "make FOXML"
     (def payload (slurp "resources/export-request.json"))
     (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
@@ -228,7 +228,9 @@
              (.toString tmpdir)))
       (is (.exists (io/file result-tmpdir uuid)))
       (is (.isDirectory (io/file result-tmpdir uuid)))
-      (let [root (-> (io/file result-tmpdir uuid (str uuid ".xml"))
+      (is (.isDirectory (io/file result-tmpdir uuid "xml")))
+
+      (let [root (-> (io/file result-tmpdir uuid "xml" (str uuid ".xml"))
                      io/input-stream
                      xml/parse
                      zip/xml-zip
@@ -241,12 +243,8 @@
           (is (= (.toString (io/file "file:/var/fedora/import/" uuid "img" (-> preview-file :filename))) ref))
           )
         )
-
-      ;(pp/pprint result-tmpdir)
-      ;(println (slurp (io/file result-tmpdir uuid (str uuid ".xml"))))
       )
-
-    ;(fs/delete-dir tmpdir)
+    (fs/delete-dir tmpdir)
     )
   )
 

@@ -121,13 +121,15 @@
   (let [uuid (slurp (io/file workdir "uuid"))
         foxml-dir (io/file workdir uuid)
         ]
+    (.mkdir (io/file workdir uuid "xml"))
     (let [foxml (f/foxml mods oai_dcs full-file preview-file
-                         {:uuid uuid :label "ahoj" 
+                         {:uuid uuid 
+                          :label "ahoj" 
                           :created (t/now)
                           :last-modified (t/now)
                           :fedora-import-dir fedora-import-dir
                           })
-          out-file (io/file workdir uuid (str uuid ".xml"))
+          out-file (io/file workdir uuid "xml" (str uuid ".xml"))
           ]
       ;(pp/pprint foxml)
       (with-open [out (io/writer out-file)]
