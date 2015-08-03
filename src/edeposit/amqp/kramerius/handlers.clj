@@ -10,6 +10,7 @@
             [clj-time.core :as t]
             [edeposit.amqp.kramerius.xml.mods :as mods]
             [edeposit.amqp.kramerius.xml.foxml :as f]
+            [clojure.java.shell :as shell]
             )
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -135,6 +136,14 @@
       (with-open [out (io/writer out-file)]
         (xml/emit foxml out))
       [uuid workdir])))
+
+(defn make-zip-package
+  [[uuid workdir]]
+  (let [out-file (io/file workdir (str uuid ".zip"))]
+    (shell/sh "zip" "-r" (.toString out-file) uuid :dir (.toString workdir))
+    [out-file workdir]
+    )
+  )
 
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
