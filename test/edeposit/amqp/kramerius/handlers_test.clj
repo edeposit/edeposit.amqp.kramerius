@@ -7,6 +7,7 @@
             [clojure.data.xml :as xml]
             [clojure.zip :as zip]
             [clojure.data.zip.xml :as zx]
+            [clojure.java.shell :as shell]
             )
   )
 
@@ -249,11 +250,36 @@
   )
 
 
+(deftest zip-package-test
+  (testing "make zip package"
+    (def payload (slurp "resources/export-request.json"))
+    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
 
+    (h/save-request  [[nil payload] tmpdir])
 
+    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+          payload (slurp "resources/marcxml2mods-response-payload.json")
+          actual-metadata (-> metadata (assoc :headers 
+                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+          [mods tmpdir-0] (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
+          [oai_dcs tmpdir-1] (h/mods->oai_dcs [mods tmpdir-0])
+          [full-file preview-file tmpdir-2] (h/save-img-files [mods tmpdir-0])
+          [out-file result-tmpdir] (-> 
+                                 (h/make-foxml [mods tmpdir-0] 
+                                               [oai_dcs tmpdir-1] 
+                                               [full-file preview-file tmpdir-2] 
+                                               "/var/fedora/import/")
+                                 h/make-zip-package
+                                 )
+          uuid (slurp (io/file result-tmpdir "uuid"))
+          ]
 
-
-
-
-
-
+      (is (= (.toString result-tmpdir) (.toString tmpdir)))
+      (is (.exists out-file))
+      (let [result (->  (shell/sh "zip" "-T" (.toString out-file)) :out)]
+        (is (= (re-find #" OK$" result) " OK"))
+        )
+      )
+    (fs/delete-dir tmpdir)
+    )
+  )
