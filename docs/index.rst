@@ -11,6 +11,12 @@ Documentation consists of two parts:
 * :ref:`user-docs`
 * :ref:`feature-docs`
 
+.. _feature-docs:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Feature Documentation
+
 .. _user-docs:
 
 .. toctree::
@@ -18,11 +24,6 @@ Documentation consists of two parts:
    :caption: User Documentation
 
    how-export-works
-
-.. _feature-docs:
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Feature Documentation
+   mount-points
 
 
