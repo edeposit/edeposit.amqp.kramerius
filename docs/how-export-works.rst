@@ -113,20 +113,32 @@ What is Called
    eDeposit Plone applications calls ``AMQP`` service to export data
    to ``Kramerius server``
 
-2. scp to kramerius
+   - creates ``first page image``
+   - converts ``first page image`` to ``jpeg2000``
 
-   AMQP service stores ``FOXML`` file with all links and metadata at
-   ``kramerius server``
+2. scp to ``Storage server``
+   
+   An application sends all data for ``Kramerius server`` to ``AMQP``
+   ``Storage server``
 
-3. REST API at Kramerius server
+3. scp to kramerius
 
-   - eDeposit notifies a ``Kramerius server`` to start import
-   - eDeposit application asks ``Kramerius server`` whether import
+   AMQP service stores ``FOXML`` file with all links and ``FOXML``
+   file to ``kramerius server``
+
+4. REST API at Kramerius server
+
+   - an application notifies a ``Kramerius server`` to start import
+   - an application asks ``Kramerius server`` whether import
      finished successfully
 
-4. AMQP service removes data
+5. AMQP service removes data
    
-   that were imported by ``Kramerius server``
+   that were imported by ``Kramerius server`` successfully
+
+6. sends ``AMQP`` response message
+
+   an application sends back notification message by ``AMQP``
 
 .. note::
 
