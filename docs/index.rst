@@ -17,6 +17,8 @@ Documentation consists of two parts:
    :maxdepth: 2
    :caption: Feature Documentation
 
+   features
+
 .. _user-docs:
 
 .. toctree::
