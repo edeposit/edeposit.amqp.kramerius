@@ -140,11 +140,6 @@ What is Called
 
    an application sends back notification message by ``AMQP``
 
-.. note::
-
-   This application does not send any data to ``storage server``.
-   They are already sent by other application.
-
 Directory structure of an archive at ``Storage server``
 -------------------------------------------------------------------------------------------------------
 
