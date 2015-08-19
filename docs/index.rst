@@ -8,8 +8,8 @@ Welcome to eDeposit AMQP Kramerius's documentation!
 
 Documentation consists of two parts:
 
-* :ref:`user-docs`
 * :ref:`feature-docs`
+* :ref:`user-docs`
 
 .. _feature-docs:
 
