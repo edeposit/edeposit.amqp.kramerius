@@ -23,14 +23,16 @@ Mount points at Kramerius server
 
   ::
 
-    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT /kramerius_edeposit_archive
+    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
+                  /kramerius_edeposit_archive
 
 ``/kramerius_edeposit_originals``
   - there are all original files that Kramerius can offer
 
   ::
 
-    mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT /kramerius_edeposit_originals
+    mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
+                  /kramerius_edeposit_originals
 
 Mount points at Image server
 ----------------------------------------------------
@@ -40,4 +42,5 @@ Mount points at Image server
 
   ::
 
-    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT /kramerius_edeposit_archive
+    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
+                  /kramerius_edeposit_archive
