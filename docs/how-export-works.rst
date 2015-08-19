@@ -82,6 +82,17 @@ Type of links at FOXML
 
 :link to original file:
    - Kramerius shows it to users
+
+External relations at FOXML
+---------------------------
+
+Location of an ePublication at Kramerius is described by RelsExt
+section.
+
+This sections must contain of full path to ePublication at Kramerius.
+
+All new levels will be generated.
+
    
 Where It is Stored
 ----------------------------------------
