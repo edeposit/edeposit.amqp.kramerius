@@ -84,9 +84,9 @@ Type of links at FOXML
    - Kramerius shows it to users
 
 External relations at FOXML
----------------------------
+---------------------------------------
 
-Location of an ePublication at Kramerius is described by RelsExt
+Location of an ePublication at Kramerius is described by ``RelsExt``
 section.
 
 This sections must contain of full path to ePublication at Kramerius.
