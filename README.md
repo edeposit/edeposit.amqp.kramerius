@@ -1,5 +1,6 @@
 # edeposit.amqp.kramerius
 ![travis status](https://travis-ci.org/edeposit/edeposit.amqp.kramerius.png)
+[![Documentation Status](https://readthedocs.org/projects/edeposit-amqp-kramerius/badge/?version=latest)](https://readthedocs.org/projects/edeposit-amqp-kramerius/?badge=latest)
 
 A Clojure library designed to ... well, that part is up to you.
 
