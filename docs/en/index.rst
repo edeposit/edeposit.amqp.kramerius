@@ -3,14 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Dokumentace k modulu eDeposit.amqp.kramerius
-=============================================================================================================================
+Welcome to eDeposit AMQP Kramerius's documentation!
+===================================================
+
+Documentation consists of two parts:
+
+* :ref:`feature-docs`
+* :ref:`user-docs`
 
 .. _feature-docs:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Požadavky a omezení
+   :caption: Feature Documentation
 
    features
 
@@ -18,8 +23,9 @@ Dokumentace k modulu eDeposit.amqp.kramerius
 
 .. toctree::
    :maxdepth: 2
-   :caption: Příručka uživatele
+   :caption: User Documentation
 
    how-export-works
    mount-points
+
 

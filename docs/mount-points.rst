@@ -1,46 +1,35 @@
-Mount points
-===================================================================
+Připojované adresáře
+===================================================
 
-There are more servers that uses data for Kramerius.
-They are offered by ``eDeposit storage server``.
+Data, která ``Kramerius server`` vyžaduje, jsou uložena na  serveru
+``Storage server``. Ten je součástí projektu ``eDeposit``.
 
-``eDeposit storage server`` offers ``smb`` protocol to mount directories with
-data.
+``eDeposit storage server`` data poskytuje pomocí ``smb`` protokolu.
 
 
-Mount points at Kramerius server
+Připojované adresáře na ``Kramerius server``
 ------------------------------------------------------------
 
 ``/kramerius_edeposit_import``
-  - there are ``FOXML`` files waiting for import ePublication into
-    Kramerius in the directory
-  - eDeposit removes files that were imported successfully
+  - v tomto adresáři jsou uloženy ``FOXML`` soubory čekající na import
+    do Krameria
+  - aplikace eDeposit je po úspěšném importu smaže
     
-``/kramerius_edeposit_archive``
-  - there are all data that were imported into Kramerius.
-  - the data does not contains ``original files``.
-  - it is due to securing access to ``original files``.
-
-  ::
-
-    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
-                  /kramerius_edeposit_archive
-
-``/kramerius_edeposit_originals``
-  - there are all original files that Kramerius can offer
+``/kramerius_edeposit_storage``
+  - v tomto adresáři jsou uloženy originály ke zpřístupňování
 
   ::
 
     mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
                   /kramerius_edeposit_originals
 
-Mount points at Image server
+Připojované adresáře na ``Image server``
 ----------------------------------------------------
 
 ``/edeposit_storage``
-  - there are all images to create ``thumbnails`` or ``preview files``
+  - v tomto adresáři jsou uloženy zdrojové obrázky první strany
 
   ::
 
-    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
+    mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
                   /kramerius_edeposit_archive
