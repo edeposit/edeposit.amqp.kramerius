@@ -6,15 +6,11 @@
 Dokumentace k modulu eDeposit.amqp.kramerius
 =============================================================================================================================
 
-.. _feature-docs:
-
 .. toctree::
    :maxdepth: 2
    :caption: Požadavky a omezení
 
    features
-
-.. _user-docs:
 
 .. toctree::
    :maxdepth: 2
@@ -22,4 +18,10 @@ Dokumentace k modulu eDeposit.amqp.kramerius
 
    how-export-works
    mount-points
+   usecases
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Pro programátory
+
+   code-examples

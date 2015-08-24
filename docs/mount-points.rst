@@ -11,9 +11,9 @@ Připojované adresáře na ``Kramerius server``
 ------------------------------------------------------------
 
 ``/kramerius_edeposit_import``
-  - v tomto adresáři jsou uloženy ``FOXML`` soubory čekající na import
+  - v tomto adresáři jsou uloženy importní balíčky soubory čekající na import
     do Krameria
-  - aplikace eDeposit je po úspěšném importu smaže
+  - ``edeposit.amqp.kramerius`` je po úspěšném importu smaže
     
 ``/kramerius_edeposit_storage``
   - v tomto adresáři jsou uloženy originály ke zpřístupňování
@@ -23,13 +23,22 @@ Připojované adresáře na ``Kramerius server``
     mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
                   /kramerius_edeposit_originals
 
-Připojované adresáře na ``Image server``
-----------------------------------------------------
-
-``/edeposit_storage``
-  - v tomto adresáři jsou uloženy zdrojové obrázky první strany
+``/kramerius_edeposit_archive``
+  - v tomto adresáři jsou uloženy balíčky importovaných dat
 
   ::
 
-    mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
+    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
                   /kramerius_edeposit_archive
+
+Připojované adresáře na ``Image server``
+----------------------------------------------------
+
+``/edeposit_archive``
+  - v tomto adresáři jsou uloženy importované balíčky včetně 
+    náhledu první strany
+
+  ::
+
+    mount -t cifs //10.10.0.42/naki/archive t2 -o username=edeposit,domain=ULTRA_NT 
+                  /edeposit_archive

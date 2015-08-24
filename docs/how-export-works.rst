@@ -32,29 +32,46 @@ Kramerius vyžaduje
    - soubor ve formátu ``FOXML``
    - obsahuje všechny informace o zobrazovaných souborech
    - obsahuje všechny informace o samotné ePublikaci
-   - obsahuje všechny linky na ``original file``, ``preview file``,
+   - obsahuje linky na ``original file``, ``preview file``,
      ``thumbnail file``
    - obsahuje všechny informace o umístění zobrazení ePublikace. Jinak
-     řečeno, obsahuje informace o stromu zanoření ePublikace v Krameriovi
+     řečeno, obsahuje informace o stromu uložení ePublikace v Krameriovi
 
 .. note::
 
    Každý balíček má své ``UUID``. Adresář s importními daty je podle
-   něj pojmenovaný.
+   něj pojmenovaný. Stejně tak i ``FOXML`` soubor.
 
 
 Struktura datového balíčku
 -------------------------------------------------
 
-Adresář pro import obsahuje datové balíčky připravené i importu:
+Adresář pro import obsahuje datové balíčky připravené k importu:
 
 ::
 
    jan@jan-XPS-L421X:~/$ tree e65d9072-2c9b-11e5-99fd-b8763f0a3d61
    e65d9072-2c9b-11e5-99fd-b8763f0a3d61/
-   └── foxml.xml
+   └── e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml
+   └── first-page.jp2
+   └── edeposit-url.txt
 
-   0 directories, 1 files
+   0 directories, 3 files
+
+
+jednotlivé soubory:
+
+ ========================================   =======================================
+ e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml   ``FOXML`` soubor                         
+ edeposit-url.txt                           soubor s odkazem do  aplikace eDeposit
+ first-page.jp2                             náhled první strany
+ ========================================   =======================================  
+
+
+.. note::
+
+   Náhled první strany je v balíčku jen pro pořádek. Bude uložen v archivu a odtud bude používán.
+   
 
 Externí odkazy ve FOXML
 ---------------------------------------
@@ -62,7 +79,7 @@ Externí odkazy ve FOXML
 Umístění ePublikace v Krameriovi je popsáné v sekci ``RelsExt``.
 
 Tato sekce musí obsahovat celou cestu k ePublikaci v Krameriovi.
-Všechny nové položky v cestě Kramerius vygeneruje.
+Všechny nové větve stromu (cesta k ePublikaci) Kramerius vygeneruje.
    
 Uložení dat
 --------------------
@@ -71,32 +88,44 @@ Uložení dat
    - poskytuje všechny originály ePublikací
    - poskytuje náhled první strany pro ``image server``. Ten z něj
      generuje náhledy.
+   - poskytuje archiv dat, která byla importována do Krameria
 
 :kramerius server:
-   - ukládá ``FOXML`` soubor k importu
-     
+   - na tomto serveru jsou uloženy ``FOXML`` soubory k importu
 
 Průběh exportu
 --------------------------
 
-1. eDeposit Plone aplikace volá ``AMQP`` službu k exportu do Krameria
-   - eDeposit poskytne inforace k vytvoření FOXML
+1. eDeposit Plone aplikace připraví data pro export do Krameria
+   viz :ref:`create-export-request`
 
-2. ``AMQP`` služba ``edeposit.amqp.kramerius`` vytvoří ``FOXML`` soubor
+2. eDeposit Plone aplikace volá ``AMQP`` službu k exportu do Krameria
+   - a poskytne informace k vytvoření ``FOXML``
+   viz :ref:`send-export-request`
 
-3. ``edeposit.amqp.kramerius`` zkopíruje ``FOXML`` soubor na
+3. ``edeposit.amqp.kramerius`` převede ``MARCXML`` data do ``MODS``
+   pomocí ``AMQP`` služby ``edeposit.amqp.marcxml2mods``
+
+4. ``edeposit.amqp.kramerius`` vytvoří ``FOXML`` soubor
+
+5. ``edeposit.amqp.kramerius`` odešle importní balíček do 
+   archivu ``storage serveru`` přes ``AMQP`` protokol 
+
+6. ``edeposit.amqp.kramerius`` zkopíruje importní balíček na
    ``Kramerius server``
+   viz :ref:`copy-export-data`
 
-4. ``edeposit.amqp.kramerius`` volá ``REST API`` na ``Kramerius server``
+7. ``edeposit.amqp.kramerius`` volá ``REST API`` na ``Kramerius server``
 
    - aplikace spustí na ``Kramerius server`` proces importu
    - aplikace se pravidelně dotazuje na ``Kramerius server`` jak
      proces importu probíhá
 
-5. ``edeposit.amqp.kramerius`` smaže data k importu
+8. ``edeposit.amqp.kramerius`` smaže data k importu
    - jakmile proces importu úspěšně skončí
+   viz :ref:`delete-imported-data`
 
-6. ``edeposit.amqp.kramerius`` posílá zprávu s odpovědí
+9. ``edeposit.amqp.kramerius`` posílá zprávu s odpovědí
    - odesílá jí do aplikace ``RabbitMQ`` přes ``AMQP`` protokol.
 
 
