@@ -6,7 +6,7 @@ aplikace:
 - přijímá data k importu z aplikace ``RabbitMQ`` přes ``AMQP`` protokol
 - vytváří ``FOXML`` soubor
 - přijímá náhled první strany ve formátu ``jpeg2000``
-- kopíruje ``FOXML`` soubor do ``Kramerius server`` přes ``scp``
+- kopíruje importní balíček do ``Kramerius server`` přes ``scp``
   protokol
 - odesílá archivní balíček do ``Storage server`` pres ``AMQP`` protokol
 - startuje proces importu voláním ``REST API`` na  ``Kramerius server``

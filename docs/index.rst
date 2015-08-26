@@ -25,3 +25,4 @@ Dokumentace k modulu eDeposit.amqp.kramerius
    :caption: Pro programátory
 
    code-examples
+   data-examples

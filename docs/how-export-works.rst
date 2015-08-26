@@ -70,8 +70,9 @@ jednotlivé soubory:
 
 .. note::
 
-   Náhled první strany je v balíčku jen pro pořádek. Bude uložen v archivu a odtud bude používán.
-   
+   Asi mate, že Kramerius dostane celý importní balíček, když
+   potřebuje jen ``FOXML``. Je jednodušší všude pracovat s celým
+   balíčkem. Proto se kopíruje balíček celý.
 
 Externí odkazy ve FOXML
 ---------------------------------------
@@ -106,7 +107,8 @@ Průběh exportu
 3. ``edeposit.amqp.kramerius`` převede ``MARCXML`` data do ``MODS``
    pomocí ``AMQP`` služby ``edeposit.amqp.marcxml2mods``
 
-4. ``edeposit.amqp.kramerius`` vytvoří ``FOXML`` soubor
+4. ``edeposit.amqp.kramerius`` vytvoří ``FOXML`` soubor a celý
+   importní balíček viz:ref:`import-package`
 
 5. ``edeposit.amqp.kramerius`` odešle importní balíček do 
    archivu ``storage serveru`` přes ``AMQP`` protokol 
@@ -116,17 +118,18 @@ Průběh exportu
    viz :ref:`copy-export-data`
 
 7. ``edeposit.amqp.kramerius`` volá ``REST API`` na ``Kramerius server``
-
    - aplikace spustí na ``Kramerius server`` proces importu
-   - aplikace se pravidelně dotazuje na ``Kramerius server`` jak
-     proces importu probíhá
 
-8. ``edeposit.amqp.kramerius`` smaže data k importu
+8. ``edeposit.amqp.kramerius`` kontroluje stav importu
+   - aplikace se pravidelně dotazuje na ``Kramerius server`` jak
+   proces importu probíhá
+
+9. ``edeposit.amqp.kramerius`` smaže data k importu
    - jakmile proces importu úspěšně skončí
    viz :ref:`delete-imported-data`
 
-9. ``edeposit.amqp.kramerius`` posílá zprávu s odpovědí
-   - odesílá jí do aplikace ``RabbitMQ`` přes ``AMQP`` protokol.
+10. ``edeposit.amqp.kramerius`` posílá zprávu s odpovědí
+    - odesílá jí do aplikace ``RabbitMQ`` přes ``AMQP`` protokol.
 
 
 Omezení procesu importu
@@ -135,5 +138,5 @@ Omezení procesu importu
 eDeposit může v Krameriovi nastarovat jen jeden proces importu.
 Poté co proces importu skončí, může nastarovat další.
 
-Data v importním adresáři mohou být uložena všechna a čekají na
-spuštění odpovídajícího importu.
+Data v importním adresáři na serveru Kramerius mohou být uložena tak
+jak budou přicházet všechna. Čekají na spuštění odpovídajícího importu.

@@ -11,7 +11,7 @@ Připojované adresáře na ``Kramerius server``
 ------------------------------------------------------------
 
 ``/kramerius_edeposit_import``
-  - v tomto adresáři jsou uloženy importní balíčky soubory čekající na import
+  - v tomto adresáři jsou uloženy importní balíčky čekající na import
     do Krameria
   - ``edeposit.amqp.kramerius`` je po úspěšném importu smaže
     
@@ -21,7 +21,7 @@ Připojované adresáře na ``Kramerius server``
   ::
 
     mount -t cifs //10.10.0.42/naki/originals t2 -o username=edeposit,domain=ULTRA_NT 
-                  /kramerius_edeposit_originals
+                  /kramerius_edeposit_storage
 
 ``/kramerius_edeposit_archive``
   - v tomto adresáři jsou uloženy balíčky importovaných dat
