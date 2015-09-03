@@ -8,7 +8,7 @@
 (defn with-urnnbn-identifier
   "add add <mods:identifier type='urnnbn'>cnb001492461</mods:identifier>"
   [root urnnbn]
-  (assoc-in root [:content] (into (-> root :content) [(xml/element :identifier {:type "urnnbn"} urnnbn )])))
+  (assoc-in root [:content] (into (-> root :content) [(xml/element :mods/identifier {:type "urnnbn"} urnnbn )])))
 
 (defn mods->oai_dc
   "transforms xml mods into oai_dc. Returns xml/root structure."

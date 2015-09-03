@@ -8,171 +8,228 @@
             [clojure.zip :as zip]
             [clojure.data.zip.xml :as zx]
             [clojure.java.shell :as shell]
+            [edeposit.amqp.kramerius.xml.utils :as u]
             )
   )
 
+(comment
 (deftest with-tmpdir-test
   (testing "add tmpdir to request"
-    (def payload (slurp "resources/export-request.json"))
-    (def result (h/request-with-tmpdir  [nil payload]))
-
-    (isa? vector result)
-    (let [ [[metadata payload] tmpdir] result]
+    (let [payload (slurp "resources/export-request.json")
+          [[metadata payload] tmpdir] (-> [:no-metadata payload]
+                                          h/request-with-tmpdir)
+          ]
       (is (.exists tmpdir))
-      (is (= metadata nil))
+      (is (= metadata :no-metadata))
       (is (= payload (slurp "resources/export-request.json")))
       (fs/delete-dir tmpdir)
       )
     )
   )
+)
 
+(comment
 (deftest save-request-test
   (testing "save request payload"
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
-    (def result (h/save-request  [[nil payload] tmpdir]))
+    (let [payload (slurp "resources/export-request.json")
+          tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+          result (-> [[:no-metadata payload] tmpdir] 
+                     h/save-request )
+          ]
+      (is (.exists tmpdir))
+      (is (= tmpdir result))
+      (is (.exists (io/file tmpdir "payload.bin")))
+      (is (.exists (io/file tmpdir "metadata.clj")))
 
-    (is (.exists tmpdir))
-    (is (.exists (io/file tmpdir "uuid")))
-    (is (.exists (io/file tmpdir "urnnbn")))
-    (is (.exists (io/file tmpdir "oai_marc.xml")))
-    (is (.exists (io/file tmpdir "oai_marc.xml.b64")))
+      (is (.exists (io/file tmpdir "payload")))
+      (is (.exists (io/file tmpdir "payload" "uuid")))
+      (is (.exists (io/file tmpdir "payload" "urnnbn")))
+      (is (.exists (io/file tmpdir "payload" "location-at-kramerius")))
+      (is (.exists (io/file tmpdir "payload" "is-private")))
+      (is (.exists (io/file tmpdir "payload" "oai_marc.xml")))
+      (is (.exists (io/file tmpdir "payload" "oai_marc.xml.b64")))
+      (is (.exists (io/file tmpdir "payload" "first-page")))
+      (is (.exists (io/file tmpdir "payload" "first-page" "robotandbaby_001.jp2")))
+      (is (.exists (io/file tmpdir "payload" "first-page" "mimetype")))
+      (is (.exists (io/file tmpdir "payload" "first-page" "filename")))
 
-    (is (.exists (io/file tmpdir "img_full")))
-    (is (.exists (io/file tmpdir "img_full" "robotandbaby.pdf")))
-    (is (.exists (io/file tmpdir "img_full" "mimetype")))
-    (is (.exists (io/file tmpdir "img_full" "filename")))
+      (is (= (fs/size (io/file tmpdir "payload" "oai_marc.xml"))
+             (fs/size (io/file "resources" "oai_marc.xml"))))
 
-    (is (.exists (io/file tmpdir "img_preview")))
-    (is (.exists (io/file tmpdir "img_preview" "robotandbaby_001.jpg")))
-    (is (.exists (io/file tmpdir "img_preview" "mimetype")))
-    (is (.exists (io/file tmpdir "img_preview" "filename")))
-    
-    (is (= (fs/size (io/file tmpdir "oai_marc.xml"))
-           (fs/size (io/file "resources" "oai_marc.xml"))))
+      (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61" 
+             (slurp (io/file tmpdir "payload" "uuid"))))
 
-    (is (= (fs/size (io/file tmpdir "img_full" "robotandbaby.pdf"))
-           (fs/size (io/file "resources" "robotandbaby.pdf"))))
+      (is (= "urn:nbn:cz:mzk-0005ol" 
+             (slurp (io/file tmpdir "payload" "urnnbn"))))
 
-    (is (= (fs/size (io/file tmpdir "img_preview" "robotandbaby_001.jpg"))
-           (fs/size (io/file "resources" "robotandbaby_001.jpg"))))
-    
-    (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61" (slurp (io/file tmpdir "uuid"))))
-    (is (= "urn:nbn:cz:mzk-0005ol" (slurp (io/file tmpdir "urnnbn"))))
+      (is (= "/monografie/2001/John McCarthy/Robot and Baby" 
+             (slurp (io/file tmpdir "payload" "location-at-kramerius"))))
+       
+      (is (= "robotandbaby_001.jp2" 
+             (slurp (io/file tmpdir "payload" "first-page" "filename"))))
 
-    (is (= "robotandbaby.pdf" (slurp (io/file tmpdir "img_full" "filename"))))
-    (is (= "application/pdf" (slurp (io/file tmpdir "img_full" "mimetype"))))
-    (is (= "robotandbaby_001.jpg" (slurp (io/file tmpdir "img_preview" "filename"))))
-    (is (= "image/jpeg" (slurp (io/file tmpdir "img_preview" "mimetype"))))
+      (is (= "image/jp2" 
+             (slurp (io/file tmpdir "payload" "first-page" "mimetype"))))
+      (fs/delete-dir tmpdir)       
+      )
+    )
+  )
+)
 
-    (fs/delete-dir tmpdir)
+(comment
+(deftest prepare-marcxml2mods-request
+  (testing "prepare marcxml2mods request"
+    (let [payload (slurp "resources/export-request.json")
+          tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+          ]
+      (h/save-request [[:no-metadata payload] tmpdir])
+      (let [[headers {:keys [:marc_xml :uuid]}] (-> tmpdir 
+                                                    h/prepare-marcxml2mods-request)
+            ]
+        (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61" uuid))
+        (is (.exists (io/file tmpdir "marcxml2mods")))
+        (is (= (.toString tmpdir) (-> headers :uuid))))
+      (fs/delete-dir tmpdir)
+      )
+    )
+  )
+)
+
+(comment
+(deftest save-marcxml2mods-response-test
+   (testing "save marcxml2mods response test"
+     (let [payload (slurp "resources/export-request.json")
+           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+           ]
+
+       (h/save-request [[:no-metadata payload] tmpdir])
+       (h/prepare-marcxml2mods-request tmpdir)
+
+       (let [ metadata (-> (slurp "resources/marcxml2mods-response-metadata.clj")
+                           read-string
+                           (update-in [:headers] assoc "UUID" (.toString tmpdir)))
+             payload (slurp "resources/marcxml2mods-response-payload.json")
+             [mods_files response-dir] (-> [metadata payload]
+                                           h/save-marcxml2mods-response)
+             ]
+         (is (= tmpdir response-dir))
+         (is (.exists (io/file response-dir "marcxml2mods" "response")))
+         (is (.exists (io/file response-dir "marcxml2mods" "response" "payload.bin")))
+         (is (.exists (io/file response-dir "marcxml2mods" "response" "metadata.clj")))
+         (is (= 1 (count mods_files)))
+         (is (re-find #"<?xml version=" (-> mods_files (nth 0))))
+         ;(println mods_files)
+         )
+       (fs/delete-dir tmpdir)
+       )
+     )
+   )
+)
+
+(deftest parse-mods-files-test
+  (testing "parse mods files test"
+    (let [payload (slurp "resources/export-request.json")
+           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+           ]
+      (h/save-request [[:no-metadata payload] tmpdir])
+      (h/prepare-marcxml2mods-request tmpdir)
+      (let [ metadata (-> (slurp "resources/marcxml2mods-response-metadata.clj")
+                           read-string
+                           (update-in [:headers] assoc "UUID" (.toString tmpdir)))
+             payload (slurp "resources/marcxml2mods-response-payload.json")
+             [mods response-dir] (-> [metadata payload]
+                                           h/save-marcxml2mods-response
+                                           h/parse-mods-files
+                                           )
+             ]
+        (is (= tmpdir response-dir))
+        (isa? vector mods)
+        (is (= (count mods) 1))
+        (doseq [root (map zip/xml-zip mods)]
+          (is (= "Umění programování v UNIXu"
+                 (zx/xml1-> root :mods:titleInfo :mods:title zx/text)))
+          (is (=  "Raymond, Eric S."
+                  (zx/xml1-> root :mods:name :mods:namePart zx/text))))
+        (is (.contains (with-out-str (u/emit (-> mods (nth 0))))  "<mods:mods")))
+      (fs/delete-dir tmpdir)
+      )
     )
   )
 
-(deftest save-marcxml2mods-response-test
-  (testing "save marcxml2mods response"
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
-
-    (h/save-request  [[nil payload] tmpdir])
-
-    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
-          payload (slurp "resources/marcxml2mods-response-payload.json")
-          actual-metadata (-> metadata (assoc :headers 
-                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
-          [mods_files response-tmpdir] (h/save-marcxml2mods-response [actual-metadata payload])
-          ]
-      (is (= (.toString response-tmpdir)
-             (.toString tmpdir)
-             ))
-      (is (= (.exists (io/file response-tmpdir "marcxml2mods-response-metadata.clj"))))
-      (is (= (.exists (io/file response-tmpdir "marcxml2mods-response-payload.json"))))
-      (is (= (slurp (io/file response-tmpdir "marcxml2mods-response-payload.json"))
-             (slurp "resources/marcxml2mods-response-payload.json")))
-
-      (isa? vector mods_files)
-      (is (= (count mods_files) 1))
-      
-      (doseq [mods mods_files]
-        (is (.contains mods "<?xml version="))
-        (is (.contains mods "<mods:mods version="))
-        (is (.contains mods "Umění programování v UNIXu"))
+(comment
+(deftest add-urnnbn-to-mods-test
+  (testing "add urnnbn to mods test"
+    (let  [payload (slurp "resources/export-request.json")
+           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+           ]
+      (h/save-request [[:no-metadata payload] tmpdir])
+      (h/prepare-marcxml2mods-request tmpdir)
+      (let [ metadata (-> (slurp "resources/marcxml2mods-response-metadata.clj")
+                          read-string
+                          (update-in [:headers] assoc "UUID" (.toString tmpdir)))
+            payload (slurp "resources/marcxml2mods-response-payload.json")
+            [mods response-dir] (-> [metadata payload]
+                                    h/save-marcxml2mods-response
+                                    h/parse-mods-files
+                                    h/add-urnnbn-to-mods
+                                    )
+            ]
+        (is (= tmpdir response-dir))
+        (isa? vector mods)
+        (is (= (count mods) 1))
+        ;(println (xml/emit-str (-> mods (nth 0))))
+        ;(println (-> mods (nth 0)))
+        (doseq [root (map zip/xml-zip mods)]
+          (is (=  (set (zx/xml-> root :dc:identifier zx/text))
+                  #{"urnnbn:urn:nbn:cz:mzk-0005ol" "uuid:asd" "ccnb:cnb001492461" 
+                    "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))
+          )
         )
       )
-
-    (fs/delete-dir tmpdir)
     )
   )
+)
 
-(deftest parse-mods-test
-  (testing "parse mods files"
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
 
-    (h/save-request  [[nil payload] tmpdir])
-
-    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
-          payload (slurp "resources/marcxml2mods-response-payload.json")
-          actual-metadata (-> metadata (assoc :headers 
-                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
-          
-          [mods response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
-                                     h/parse-mods-files
-                                     )
-          ]
-
-      (is (= (.toString response-tmpdir)
-             (.toString tmpdir)
-             ))
-
-      (isa? vector mods)
-      (is (= (count mods) 1))
-      (doseq [root (map zip/xml-zip mods)]
-        (is (=  (zx/xml1-> root :titleInfo :title zx/text)
-                "Umění programování v UNIXu"))
-        (is (=  (zx/xml1-> root :name :namePart zx/text) 
-                "Raymond, Eric S."))))
-
-    (fs/delete-dir tmpdir)
-    )
-  )
-
+(comment
 (deftest mods->dc-test
-  (testing "transformation MODS -> OAI DC"
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
+   (testing "transformation MODS -> OAI DC"
+     (def payload (slurp "resources/export-request.json"))
+     (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
 
-    (h/save-request  [[nil payload] tmpdir])
+     (h/save-request  [[nil payload] tmpdir])
 
-    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
-          payload (slurp "resources/marcxml2mods-response-payload.json")
-          actual-metadata (-> metadata (assoc :headers 
-                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
+     (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
+           payload (slurp "resources/marcxml2mods-response-payload.json")
+           actual-metadata (-> metadata (assoc :headers 
+                                               (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
           
-          [oai_dcs response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
-                                        h/parse-mods-files
-                                        h/add-urnnbn-to-first-mods
-                                        h/mods->oai_dcs
-                                        )
-          ]
+           [oai_dcs response-tmpdir] (-> (h/save-marcxml2mods-response [actual-metadata payload])
+                                         h/parse-mods-files
+                                         h/add-urnnbn-to-first-mods
+                                         h/mods->oai_dcs
+                                         )
+           ]
 
-      (is (= (.toString response-tmpdir)
-             (.toString tmpdir)
-             ))
+       (is (= (.toString response-tmpdir)
+              (.toString tmpdir)
+              ))
 
-      (isa? vector oai_dcs)
-      (is (= (count oai_dcs) 1))
+       (isa? vector oai_dcs)
+       (is (= (count oai_dcs) 1))
       
-      (doseq [root (map (comp zip/xml-zip xml/sexp-as-element) oai_dcs)]
-        (is (=  (zx/xml1-> root :dc:title  zx/text)  "Umění programování v UNIXu"))
-        (is (=  (zx/xml1-> root :dc:date zx/text) "2004"))
-        (is (=  (set (zx/xml-> root :dc:identifier zx/text))  
-                #{"urnnbn:urn:nbn:cz:mzk-0005ol" "uuid:asd" "ccnb:cnb001492461" 
-                  "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))))
+       (doseq [root (map (comp zip/xml-zip xml/sexp-as-element) oai_dcs)]
+         (is (=  (zx/xml1-> root :dc:title  zx/text)  "Umění programování v UNIXu"))
+         (is (=  (zx/xml1-> root :dc:date zx/text) "2004"))
+         (is (=  (set (zx/xml-> root :dc:identifier zx/text))  
+                 #{"urnnbn:urn:nbn:cz:mzk-0005ol" "uuid:asd" "ccnb:cnb001492461" 
+                   "isbn:80-251-0225-4 (brož.)" "oclc:85131856"}))))
 
-    (fs/delete-dir tmpdir))
-  )
+     (fs/delete-dir tmpdir))
+   )
+)
 
+(comment
 (deftest save-img-files-test
   (testing "save img files to FOXML dir"
     (def payload (slurp "resources/export-request.json"))
@@ -206,7 +263,9 @@
     (fs/delete-dir tmpdir)
     )
   )
+)
 
+(comment
 (deftest foxml-test
   (testing "make FOXML"
     (def payload (slurp "resources/export-request.json"))
@@ -248,8 +307,10 @@
     (fs/delete-dir tmpdir)
     )
   )
+)
 
 
+(comment
 (deftest zip-package-test
   (testing "make zip package"
     (def payload (slurp "resources/export-request.json"))
@@ -283,3 +344,4 @@
     (fs/delete-dir tmpdir)
     )
   )
+)

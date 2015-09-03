@@ -4,8 +4,8 @@
    [clojure.tools.nrepl.server :refer (start-server)]
    [edeposit.amqp.kramerius.systems :refer [prod-system]]
    [reloaded.repl :refer [system init start stop go reset]]
-   [rx.lang.clojure.core :as rx]
    [edeposit.amqp.kramerius.handlers :as h]
+   [reagi.core :as r]
    )
   (:gen-class :main true)
 )
@@ -33,17 +33,17 @@
   "
   [request-obs marcxml-to-mods-response-obs ssh-response-obs]
   (let  [ workdir-obs (->> request-obs
-                           (rx/map h/request-with-tmpdir)
-                           (rx/map h/save-request))
+                           (r/map h/request-with-tmpdir)
+                           (r/map h/save-request))
          requests-to-marcxml2mods-obs (->> workdir-obs
-                                           (rx/map h/prepare-marcxml2mods-request))
+                                           (r/map h/prepare-marcxml2mods-request))
          mods-files-obs (->> marcxml-to-mods-response-obs
-                                  (rx/map h/save-marcxml2mods-response)
-                                  (rx/map h/parse-mods-files)
+                                  (r/map h/save-marcxml2mods-response)
+                                  (r/map h/parse-mods-files)
                                   )
          requests-to-ssh-obs (->> mods-files-obs
-                                  (rx/map h/mods->oai_dcs)
-                                  (rx/map h/make-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
+                                  (r/map h/mods->oai_dcs)
+                                  (r/map h/make-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
                                   )]
     { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
      :requests-to-ssh requests-to-ssh-obs})

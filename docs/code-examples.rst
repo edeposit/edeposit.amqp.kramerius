@@ -55,8 +55,8 @@ Uložení dat k importu do Krameria
 
 .. code:: shell
 
-   scp -i ~/.ssh/id_rsa-edeposit-to-kramerius -r
-          resources/e65d9072-2c9b-11e5-99fd-b8763f0a3d61
+   scp -i ~/.ssh/id_rsa-edeposit-to-kramerius
+          resources/e65d9072-2c9b-11e5-99fd-b8763f0a3d61/e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml
           edeposit@HAPPKRAM2.nkp.cz:/home/kramerius/kramerius_edeposit_import
 
 .. _delete-imported-data:
@@ -69,4 +69,4 @@ Smazání importovaných dat v Krameriovi
    ssh -i ~/.ssh/id_rsa-edeposit-to-kramerius
           edeposit@HAPPKRAM2.nkp.cz 
           "cd /home/kramerius/kramerius_edeposit_import;
-          rm -rf e65d9072-2c9b-11e5-99fd-b8763f0a3d61"
+          rm e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml"

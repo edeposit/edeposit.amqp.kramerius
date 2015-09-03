@@ -10,6 +10,7 @@
             [clj-time.core :as t]
             [edeposit.amqp.kramerius.xml.mods :as mods]
             [edeposit.amqp.kramerius.xml.foxml :as f]
+            [edeposit.amqp.kramerius.xml.utils :as u]
             [clojure.java.shell :as shell]
             )
   (:import [org.apache.commons.codec.binary Base64])
@@ -23,48 +24,53 @@
 (defn request-with-tmpdir
   "It creates tmpdir and add it to request data"
   [[metadata payload]]
-  (let [tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
+  (let [tmpdir (fs/temp-dir "export-to-kramerius-request-")]
     [[metadata payload] tmpdir]))
 
 (defn save-request
   "it returns name of a directory where payload is saved"
-  [[[metadata payload] workdir]]
-  (def msg (json/read-str (String. payload) :key-fn keyword))
-  (def marcxml-file (io/file workdir "oai_marc.xml"))
-
-  (log/info "save export request to" workdir)  
-  (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
-  (spit (io/file workdir "uuid") (:uuid msg))
-  (spit (io/file workdir "urnnbn") (:urnnbn msg))
-
-  (with-open [out (io/output-stream marcxml-file)]
-    (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
-
-  (let [out-dir (io/file workdir "img_full")
-        data (-> msg :img_full)
+  [
+   [[metadata payload] workdir]
+   ]
+  (spit (io/file workdir "payload.bin") payload)
+  (.mkdir (io/file workdir "payload"))
+  (spit (io/file workdir "metadata.clj") metadata)
+  (let [msg (json/read-str (String. payload) :key-fn keyword) 
+        marcxml-file (io/file  workdir "payload" "oai_marc.xml")
         ]
-    (.mkdir out-dir)
-    (spit (io/file out-dir "mimetype") (-> data :mimetype))
-    (spit (io/file out-dir "filename") (-> data :filename))
-    (with-open [out (io/output-stream (io/file out-dir (-> data :filename)))]
-      (.write out (Base64/decodeBase64 (-> data :b64_data)))))
-
-  (let [out-dir (io/file workdir "img_preview")
-        data (-> msg :img_preview)]
-    (.mkdir out-dir)
-    (spit (io/file out-dir "mimetype") (-> data :mimetype))
-    (spit (io/file out-dir "filename") (-> data :filename))
-    (with-open [out (io/output-stream (io/file out-dir (-> data :filename)))]
-      (.write out (Base64/decodeBase64 (-> data :b64_data)))))
-
-  workdir)
+    (log/info "save export request to" workdir)  
+    (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
+    (spit (io/file workdir "payload" "uuid") (:uuid msg))
+    (spit (io/file workdir "payload" "urnnbn") (:urnnbn msg))
+    (spit (io/file workdir "payload" "location-at-kramerius") (:location_at_kramerius msg))
+    (spit (io/file workdir "payload" "is-private") (:is_private msg))
+    
+    (with-open [out (io/output-stream marcxml-file)]
+      (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
+    
+    (let [out-dir (io/file workdir "payload" "first-page")
+          first-page (-> msg :first_page)
+          ]
+      (.mkdir out-dir)
+      (spit (io/file out-dir "mimetype") (-> first-page :mimetype))
+      (spit (io/file out-dir "filename") (-> first-page :filename))
+      (with-open [out (io/output-stream (io/file out-dir (-> first-page :filename)))]
+        (.write out (Base64/decodeBase64 (-> first-page :b64_data)))))
+    )
+  workdir
+  )
 
 (defn prepare-marcxml2mods-request
   [workdir]
+  
   (log/info "prepare marcxml2mods request at" workdir)
+
+  (.mkdir (io/file workdir "marcxml2mods"))
+  (.mkdir (io/file workdir "marcxml2mods" "request"))
+
   [{:uuid (.toString workdir)}
-   {:marc_xml (slurp (io/file workdir "oai_marc.xml"))
-    :uuid (slurp (io/file workdir "uuid"))
+   {:marc_xml (slurp (io/file workdir "payload" "oai_marc.xml"))
+    :uuid (slurp (io/file workdir "payload" "uuid"))
     }])
 
 (defn save-marcxml2mods-response
@@ -72,17 +78,39 @@
   (let [uuid (-> metadata :headers (get "UUID"))
         workdir (io/file uuid)]
     (log/info "save marcxml2mods response into" workdir)
-    (spit (io/file workdir "marcxml2mods-response-metadata.clj") metadata)
-    (spit (io/file workdir "marcxml2mods-response-payload.json") payload)
+
+    (.mkdir (io/file workdir "marcxml2mods"))
+    (.mkdir (io/file workdir "marcxml2mods" "response"))
+    (let [response-dir (io/file workdir "marcxml2mods" "response")]
+      (spit (io/file response-dir "metadata.clj") metadata)
+      (spit (io/file response-dir "payload.bin") payload)
+      )
     (let [ mods_files (-> payload 
-         (json/read-str :key-fn keyword) 
-         :mods_files)]
+                          (json/read-str :key-fn keyword) 
+                          :mods_files)]
       [mods_files workdir])))
+
+
 
 (defn parse-mods-files
   "takes strings and returns xml root for each xml string"
   [[mods_files workdir]]
-  [(map xml/parse-str mods_files) workdir])
+  [(map (fn [mods] (-> mods 
+                      xml/parse-str
+                      (update-in [:attrs] assoc :xmlns/mods "http://www.loc.gov/mods/v3")
+                      (update-in [:attrs] assoc :xmlns/xlink "http://www.w3.org/1999/xlink")
+                      (update-in [:attrs] assoc :xmlns/xsi "http://www.w3.org/2001/XMLSchema-instance")
+                      (u/add-xmlns :mods)
+                      ))  mods_files) workdir])
+
+(defn add-urnnbn-to-mods
+  [[mods workdir]]
+  (let [urnnbn (slurp (io/file workdir "payload" "urnnbn"))]
+    [(map (fn [one-mods] (mods/with-urnnbn-identifier one-mods urnnbn)) mods) workdir]))
+
+(defn mods->oai_dcs
+  [[mods workdir]]
+  [(map mods/mods->oai_dc mods) workdir])
 
 (defn save-img-files
   [[mods_files workdir]]
@@ -105,15 +133,6 @@
       :filename (slurp-img-preview "filename")
       } 
      workdir]))
-
-(defn add-urnnbn-to-first-mods
-  [[mods workdir]]
-  (let [urnnbn (slurp (io/file workdir "urnnbn"))]
-    [(into [(mods/with-urnnbn-identifier (first mods) urnnbn)] (rest mods))  workdir]))
-
-(defn mods->oai_dcs
-  [[mods workdir]]
-  [(map mods/mods->oai_dc mods) workdir])
 
 
 (defn make-foxml

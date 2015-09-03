@@ -4,7 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [io.reactivex/rxclojure "1.0.0"]
+                 ;[io.reactivex/rxclojure "1.0.0"]
+                 [reagi "0.10.1"]
                  [org.clojure/data.xml "0.0.8"]
                  [com.novemberain/langohr "3.2.0"]
                  [org.clojure/tools.logging "0.3.1"]
@@ -22,6 +23,8 @@
   :main edeposit.amqp.kramerius.core
   :profiles {:dev {:plugins [
                              [quickie "0.4.0"]
+                             [spyscope "0.1.5"]
+                             [cider/cider-nrepl "0.9.1"]
                              ]}
              :uberjar {:aot :all}
              }
