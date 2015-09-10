@@ -6,6 +6,7 @@ marcxml=open('resources/oai_marc.xml','rb').read()
 first_page_fname = 'resources/robotandbaby_001.jp2'
 original_fname = "robotandbaby.pdf"
 location_at_kramerius = "/monografie/2001/John McCarthy/Robot and Baby"
+storage_path = "/monografie/01/01-robotandbaby.pdf"
 open('resources/export-request.json','wb').write(
     json.dumps(
         dict( __nt_name="ExportToKramerius",
@@ -16,6 +17,7 @@ open('resources/export-request.json','wb').write(
                                 mimetype='image/jp2',
                                 b64_data = base64.encodestring(open(first_page_fname,'rb').read())),
               original = dict(filename=original_fname,
+                              storage_path = storage_path,
                               mimetype='application/pdf'),
               location_at_kramerius = location_at_kramerius,
               is_private = False,

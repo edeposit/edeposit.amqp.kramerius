@@ -107,7 +107,7 @@ Průběh exportu
    pomocí ``AMQP`` služby ``edeposit.amqp.marcxml2mods``
 
 4. ``edeposit.amqp.kramerius`` vytvoří ``FOXML`` soubor a celý
-   importní balíček viz:ref:`import-package`
+   importní balíček viz :ref:`import-package`
 
 5. ``edeposit.amqp.kramerius`` odešle importní balíček do 
    archivu ``storage serveru`` přes ``AMQP`` protokol 
