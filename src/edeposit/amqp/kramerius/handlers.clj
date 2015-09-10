@@ -1,6 +1,6 @@
 (ns edeposit.amqp.kramerius.handlers
-  (:require [langohr.basic     :as lb]
-            [me.raynes.fs :as fs]
+  (:require [me.raynes.fs :as fs]
+            [langohr.basic     :as lb]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
@@ -8,7 +8,7 @@
             [clojure.data.json :as json]
             [clojure.data.xml :as xml]
             [clj-time.core :as t]
-            [edeposit.amqp.kramerius.xml.mods :as mods]
+            [edeposit.amqp.kramerius.xml.mods :as m]
             [edeposit.amqp.kramerius.xml.foxml :as f]
             [edeposit.amqp.kramerius.xml.utils :as u]
             [clojure.java.shell :as shell]
@@ -29,15 +29,12 @@
 
 (defn save-request
   "it returns name of a directory where payload is saved"
-  [
-   [[metadata payload] workdir]
-   ]
+  [[[metadata payload] workdir]]
   (spit (io/file workdir "payload.bin") payload)
   (.mkdir (io/file workdir "payload"))
   (spit (io/file workdir "metadata.clj") metadata)
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
-        marcxml-file (io/file  workdir "payload" "oai_marc.xml")
-        ]
+        marcxml-file (io/file  workdir "payload" "oai_marc.xml")]
     (log/info "save export request to" workdir)  
     (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
     (spit (io/file workdir "payload" "uuid") (:uuid msg))
@@ -56,6 +53,14 @@
       (spit (io/file out-dir "filename") (-> first-page :filename))
       (with-open [out (io/output-stream (io/file out-dir (-> first-page :filename)))]
         (.write out (Base64/decodeBase64 (-> first-page :b64_data)))))
+    
+    (let [out-dir (io/file workdir "payload" "original")
+          original (-> msg :original)
+          ]
+      (.mkdir out-dir)
+      (spit (io/file out-dir "mimetype") (-> original :mimetype))
+      (spit (io/file out-dir "filename") (-> original :filename))
+      (spit (io/file out-dir "storage_path") (-> original :storage_path)))
     )
   workdir
   )
@@ -97,63 +102,73 @@
   [[mods_files workdir]]
   [(map (fn [mods] (-> mods 
                       xml/parse-str
-                      (update-in [:attrs] assoc :xmlns/mods "http://www.loc.gov/mods/v3")
-                      (update-in [:attrs] assoc :xmlns/xlink "http://www.w3.org/1999/xlink")
-                      (update-in [:attrs] assoc :xmlns/xsi "http://www.w3.org/2001/XMLSchema-instance")
-                      (u/add-xmlns :mods)
+                      (update-in [:attrs] assoc :xmlns "http://www.loc.gov/mods/v3")
+                      (update-in [:attrs] assoc :xmlns:xlink "http://www.w3.org/1999/xlink")
+                      (update-in [:attrs] assoc :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance")
+                      (update-in [:attrs] (fn [attrs] (assoc attrs 
+                                                            :xsi:schemaLocation 
+                                                            (:xsi/schemaLocation attrs))))
+                      (update-in [:attrs] dissoc :xsi/schemaLocation)
                       ))  mods_files) workdir])
 
 (defn add-urnnbn-to-mods
   [[mods workdir]]
   (let [urnnbn (slurp (io/file workdir "payload" "urnnbn"))]
-    [(map (fn [one-mods] (mods/with-urnnbn-identifier one-mods urnnbn)) mods) workdir]))
+    [(map (fn [one-mods] (m/with-urnnbn-identifier one-mods urnnbn)) mods) workdir]))
 
 (defn mods->oai_dcs
   [[mods workdir]]
-  [(map mods/mods->oai_dc mods) workdir])
+  [(map m/mods->oai_dc mods) workdir])
 
-(defn save-img-files
-  [[mods_files workdir]]
-  (let [uuid (slurp (io/file workdir "uuid"))
-        slurp-img-full (comp slurp (partial io/file workdir "img_full"))
-        slurp-img-preview (comp slurp (partial io/file workdir "img_preview"))
-        ]
-    (.mkdir (io/file workdir uuid))
-    (.mkdir (io/file workdir uuid "img"))
-    (fs/copy (io/file workdir "img_full" (slurp-img-full "filename")) 
-             (io/file workdir uuid "img" (slurp-img-full "filename")))
-    (fs/copy (io/file workdir "img_preview" (slurp-img-preview "filename")) 
-             (io/file workdir uuid "img" (slurp-img-preview "filename")))
-    [{:img-type :img_full
-      :mime-type (slurp-img-full "mimetype")
-      :filename (slurp-img-full "filename")
-      }
-     {:img-type :img_preview
-      :mime-type (slurp-img-preview "mimetype")
-      :filename (slurp-img-preview "filename")
-      } 
-     workdir]))
+;; (defn save-img-files
+;;   [[mods_files workdir]]
+;;   (let [uuid (slurp (io/file workdir "uuid"))
+;;         slurp-img-full (comp slurp (partial io/file workdir "img_full"))
+;;         slurp-img-preview (comp slurp (partial io/file workdir "img_preview"))
+;;         ]
+;;     (.mkdir (io/file workdir uuid))
+;;     (.mkdir (io/file workdir uuid "img"))
+;;     (fs/copy (io/file workdir "img_full" (slurp-img-full "filename")) 
+;;              (io/file workdir uuid "img" (slurp-img-full "filename")))
+;;     (fs/copy (io/file workdir "img_preview" (slurp-img-preview "filename")) 
+;;              (io/file workdir uuid "img" (slurp-img-preview "filename")))
+;;     [{:type :img_full
+;;       :mimetype (slurp-img-full "mimetype")
+;;       :filename (slurp-img-full "filename")
+;;       }
+;;      {:type :img_preview
+;;       :mimetype (slurp-img-preview "mimetype")
+;;       :filename (slurp-img-preview "filename")
+;;       } 
+;;      workdir]))
 
 
 (defn make-foxml
-  [[mods workdir] [oai_dcs workdir-1] [full-file preview-file workdir-2] fedora-import-dir]
-  {:pre [(= workdir workdir-1 workdir-2)]}
-  (let [uuid (slurp (io/file workdir "uuid"))
-        foxml-dir (io/file workdir uuid)
+  [[mods mods-workdir] [oai_dcs oai-workdir] workdir & {:keys [fedora-import-dir storage-dir]} ]
+  {:pre [(= workdir mods-workdir oai-workdir)]}
+  (let [payload-dir (io/file workdir "payload")
+        uuid (slurp (io/file payload-dir "uuid"))
+        result-dir (io/file workdir uuid)
+        full-file {:mimetype (slurp (io/file payload-dir "original" "mimetype"))
+                   :filename (slurp (io/file payload-dir "original" "filename"))
+                   :storage_path (slurp (io/file payload-dir "original" "storage_path"))
+                   }
+        preview-file {:mimetype (slurp (io/file payload-dir "first-page" "mimetype"))
+                      :filename (slurp (io/file payload-dir "first-page" "filename"))
+                      }
         ]
-    (.mkdir (io/file workdir uuid "xml"))
+    (.mkdir result-dir)
     (let [foxml (f/foxml mods oai_dcs full-file preview-file
                          {:uuid uuid 
-                          :label "ahoj" 
+                          :label "ahoj"
                           :created (t/now)
                           :last-modified (t/now)
                           :fedora-import-dir fedora-import-dir
+                          :storage-dir storage-dir
                           })
-          out-file (io/file workdir uuid "xml" (str uuid ".xml"))
+          out-file (io/file result-dir (str uuid ".xml"))
           ]
-      ;(pp/pprint foxml)
-      (with-open [out (io/writer out-file)]
-        (xml/emit foxml out))
+      (spit out-file (u/emit foxml))
       [uuid workdir])))
 
 (defn make-zip-package

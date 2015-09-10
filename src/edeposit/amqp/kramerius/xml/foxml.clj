@@ -16,12 +16,21 @@
     )
   )
 
+(defn to-sexp-dc [el]
+  (if (associative? el)
+    (let [{tag :tag attrs :attrs content :content} el]
+      [tag attrs (map to-sexp-dc content)]
+      )
+    (if (seq? el) (map to-sexp-dc el) el)
+    )
+  )
+
 
 (defn foxml
   "transforms xml mods into oai_dc. Returns xml/root structure."
-  [mods dcs full-file preview-file {:keys [uuid label created last-modified fedora-import-dir]}]
+  [mods dcs full-file preview-file {:keys [uuid label created last-modified fedora-import-dir storage-dir]}]
   (xml/sexp-as-element
-   [:foxml:digitalObject  {:PID uuid :VERSION "1.1"
+   [:foxml:digitalObject  {:PID (str "uuid:" uuid) :VERSION "1.1"
                            :xsi:schemaLocation "info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd" 
                            :xmlns:foxml "info:fedora/fedora-system:def/foxml#" 
                            :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"}
@@ -39,7 +48,7 @@
                                   :CREATED (.toString created)
                                   :LABEL "Dublin Core Record for this object" 
                                   :ID "DC.1"}
-        [:foxml:xmlContent dc]]]
+        [:foxml:xmlContent (to-sexp-dc dc)]]]
       )
     (for [mods-one mods]
       [:foxml:datastream {:VERSIONABLE "true" :STATE "A" :CONTROL_GROUP "X" :ID "BIBLIO_MODS"} 
@@ -48,15 +57,15 @@
          [:mods:mods {:version "3.3"}
           (map to-sexp (:content mods-one))]]]])
     [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_FULL"}
-     [:foxml:datastreamVersion {:MIMETYPE (-> full-file :mime-type) :CREATED created :ID "IMG_FULL.0"}
+     [:foxml:datastreamVersion {:MIMETYPE (-> full-file :mimetype) :CREATED created :ID "IMG_FULL.0"}
       [:foxml:contentLocation 
-       {:REF (str "file:" (.toString (io/file fedora-import-dir uuid "img" (-> full-file :filename))))
+       {:REF (str "file:" (.toString (io/file storage-dir uuid (-> full-file :filename))))
         :TYPE "URL"}]]]
 
     [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_PREVIEW"}
-     [:foxml:datastreamVersion {:MIMETYPE (-> preview-file :mime-type) :CREATED created :ID "IMG_PREVIEW.0"}
+     [:foxml:datastreamVersion {:MIMETYPE (-> preview-file :mimetype) :CREATED created :ID "IMG_PREVIEW.0"}
       [:foxml:contentLocation 
-       {:REF (str "file:" (.toString (io/file fedora-import-dir uuid "img" (-> preview-file :filename))))
+       {:REF (str "file:" (.toString (io/file storage-dir uuid (-> preview-file :filename))))
         :TYPE "URL"}]]]
     ]
    )
