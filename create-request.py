@@ -4,6 +4,7 @@ import base64
 
 marcxml=open('resources/oai_marc.xml','rb').read()
 first_page_fname = 'resources/robotandbaby_001.jp2'
+original_fname = "robotandbaby.pdf"
 location_at_kramerius = "/monografie/2001/John McCarthy/Robot and Baby"
 open('resources/export-request.json','wb').write(
     json.dumps(
@@ -14,6 +15,8 @@ open('resources/export-request.json','wb').write(
               first_page = dict(filename=first_page_fname.split('/')[-1],
                                 mimetype='image/jp2',
                                 b64_data = base64.encodestring(open(first_page_fname,'rb').read())),
+              original = dict(filename=original_fname,
+                              mimetype='application/pdf'),
               location_at_kramerius = location_at_kramerius,
               is_private = False,
           )

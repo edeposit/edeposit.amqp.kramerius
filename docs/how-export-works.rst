@@ -46,7 +46,7 @@ Kramerius vyžaduje
 Struktura datového balíčku
 -------------------------------------------------
 
-Adresář pro import obsahuje datové balíčky připravené k importu:
+Archiv obsahuje datové balíčky připravené k importu:
 
 ::
 
@@ -70,9 +70,8 @@ jednotlivé soubory:
 
 .. note::
 
-   Asi mate, že Kramerius dostane celý importní balíček, když
-   potřebuje jen ``FOXML``. Je jednodušší všude pracovat s celým
-   balíčkem. Proto se kopíruje balíček celý.
+   Kramerius dostane jen ``FOXML`` soubor. Celý balíček bude uložen v archivu.
+   Přes něj může Kramerius získat další části balíčku.
 
 Externí odkazy ve FOXML
 ---------------------------------------
