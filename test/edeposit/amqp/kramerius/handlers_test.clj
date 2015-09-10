@@ -9,6 +9,7 @@
             [clojure.data.zip.xml :as zx]
             [clojure.java.shell :as shell]
             [edeposit.amqp.kramerius.xml.utils :as u]
+            [clojurewerkz.serialism.core :as s]
             )
   )
 
@@ -312,16 +313,17 @@
                                     h/parse-mods-files
                                     h/add-urnnbn-to-mods)
             [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
-            [out-file zip-tmpdir] (-> (h/make-package-with-foxml 
-                                       [mods mods-tmpdir] 
-                                       [oai_dcs oai-tmpdir] 
-                                       tmpdir
-                                       :fedora-import-dir "/var/fedora/import/"
-                                       :storage-dir "/var/edeposit_storage/archive"
-                                       )
-                                      h/make-zip-package
-                                      )
+            [out-file uuid zip-tmpdir] (-> (h/make-package-with-foxml 
+                                            [mods mods-tmpdir] 
+                                            [oai_dcs oai-tmpdir] 
+                                            tmpdir
+                                            :fedora-import-dir "/var/fedora/import/"
+                                            :storage-dir "/var/edeposit_storage/archive"
+                                            )
+                                           h/make-zip-package
+                                           )
             ]
+        (is (= zip-tmpdir tmpdir))
         (is (.exists out-file))
         (let [result (->  (shell/sh "zip" "-T" (.toString out-file)) :out)]
           (is (= (re-find #" OK$" result) " OK")))
@@ -346,22 +348,28 @@
                                     h/parse-mods-files
                                     h/add-urnnbn-to-mods)
             [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
-            request-workdir (-> (h/make-package-with-foxml 
-                                 [mods mods-tmpdir] 
-                                 [oai_dcs oai-tmpdir] 
-                                 tmpdir
-                                 :fedora-import-dir "/var/fedora/import/"
-                                 :storage-dir "/var/edeposit_storage/archive"
-                                 )
-                                h/make-zip-package
-                                h/prepare-request-for-export-to-storage
-                                )
+            [metadata payload request-workdir] (-> (h/make-package-with-foxml 
+                                                    [mods mods-tmpdir] 
+                                                    [oai_dcs oai-tmpdir] 
+                                                    tmpdir
+                                                    :fedora-import-dir "/var/fedora/import/"
+                                                    :storage-dir "/var/edeposit_storage/archive"
+                                                    )
+                                                   h/make-zip-package
+                                                   h/prepare-request-for-export-to-storage
+                                                   )
             ]
         (is (= request-workdir tmpdir))
         (is (.isDirectory (io/file request-workdir "export-to-storage")))
         (is (.isDirectory (io/file request-workdir "export-to-storage" "request")))
+        (let [request-dir (io/file request-workdir "export-to-storage" "request")
+              deserialized-metadata (s/deserialize (slurp (io/file request-dir "metadata.clj"))
+                                                   s/clojure-content-type
+                                                   )]
+          (is (= deserialized-metadata metadata))
+          )
         )
-      ;(fs/delete-dir tmpdir)
+      (fs/delete-dir tmpdir)
       )
     )
   )

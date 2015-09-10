@@ -12,6 +12,7 @@
             [edeposit.amqp.kramerius.xml.foxml :as f]
             [edeposit.amqp.kramerius.xml.utils :as u]
             [clojure.java.shell :as shell]
+            [clojurewerkz.serialism.core :as s]
             )
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -177,15 +178,25 @@
   [[uuid workdir]]
   (let [out-file (io/file workdir (str uuid ".zip"))]
     (shell/sh "zip" "-r" (.toString out-file) uuid :dir (.toString workdir))
-    [out-file workdir]
+    [out-file uuid workdir]
     )
   )
 
 (defn prepare-request-for-export-to-storage
-  [[zip-file workdir]]
+  [[zip-file uuid workdir]]
+
   (.mkdir (io/file workdir "export-to-storage"))
   (.mkdir (io/file workdir "export-to-storage" "request"))
-  workdir
+
+  (let [request-dir (io/file workdir "export-to-storage" "request")
+        metadata {:headers {"UUID" uuid}
+                  :content-type "edeposit/export-to-storage-request"
+                  :content-encoding "application/json"
+                  :persistent true}
+        payload ""]
+    (spit (io/file request-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
+    [metadata payload workdir]
+    )
   )
 
 (defn parse-and-export [metadata ^bytes payload]

@@ -19,6 +19,7 @@
                  [danlentz/clj-uuid "0.1.6"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/data.zip "0.1.1"]
+                 [clojurewerkz/serialism "1.3.0"]
                  ]
   :main edeposit.amqp.kramerius.core
   :profiles {:dev {:plugins [
