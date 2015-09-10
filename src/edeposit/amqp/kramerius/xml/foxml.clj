@@ -39,8 +39,8 @@
      [:foxml:property {:VALUE "Active" :NAME "info:fedora/fedora-system:def/model#state"}]
      [:foxml:property {:VALUE "fedoraAdmin" :NAME "info:fedora/fedora-system:def/model#ownerId"}]
      [:foxml:property {:VALUE (.toString created) :NAME "info:fedora/fedora-system:def/model#createdDate"}]
-     [:foxml:property {:VALUE (.toString last-modified) :NAME "info:fedora/fedora-system:def/view#lastModifiedDate"}]
-     ]
+     [:foxml:property {:VALUE (.toString last-modified) :NAME "info:fedora/fedora-system:def/view#lastModifiedDate"}]]
+    
     (for [dc dcs]
       [:foxml:datastream {:VERSIONABLE "true" :STATE "A" :CONTROL_GROUP "X" :ID "DC"} 
        [:foxml:datastreamVersion {:FORMAT_URI "http://www.openarchives.org/OAI/2.0/oai_dc/" 
@@ -50,12 +50,14 @@
                                   :ID "DC.1"}
         [:foxml:xmlContent (to-sexp-dc dc)]]]
       )
+
     (for [mods-one mods]
       [:foxml:datastream {:VERSIONABLE "true" :STATE "A" :CONTROL_GROUP "X" :ID "BIBLIO_MODS"} 
        [:foxml:xmlContent 
         [:mods:modsCollection {:xmlns:mods "http://www.loc.gov/mods/v3"}
          [:mods:mods {:version "3.3"}
           (map to-sexp (:content mods-one))]]]])
+
     [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_FULL"}
      [:foxml:datastreamVersion {:MIMETYPE (-> full-file :mimetype) :CREATED created :ID "IMG_FULL.0"}
       [:foxml:contentLocation 
