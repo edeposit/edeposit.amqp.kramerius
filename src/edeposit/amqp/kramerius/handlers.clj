@@ -181,6 +181,13 @@
     )
   )
 
+(defn prepare-request-for-export-to-storage
+  [[zip-file workdir]]
+  (.mkdir (io/file workdir "export-to-storage"))
+  (.mkdir (io/file workdir "export-to-storage" "request"))
+  workdir
+  )
+
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
         data-file (fs/temp-file "kramerius-amqp-" ".foxml")
@@ -188,19 +195,8 @@
     (with-open [out (io/output-stream data-file)]
       (.write out (Base64/decodeBase64 (:b64_data msg)))
       )
-    (comment
-      (let [result (validate (.toString data-file))]
-       (.delete data-file)
-       result
-       )
-      )
     )
   )
-
-(def repl-out *out*)
-(defn prn-to-repl [& args]
-  (binding [*out* repl-out]
-    (apply prn args)))
 
 (defn response-properties [metadata]
   {:headers {"UUID" (-> metadata :headers (get "UUID"))}

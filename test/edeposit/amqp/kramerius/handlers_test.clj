@@ -277,7 +277,7 @@
                       xml/parse
                       zip/xml-zip
                       )]
-          (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_FULL")] 
+          (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_FULL")]
                                :datastreamVersion :contentLocation (zx/attr :REF)) 
                 filename (slurp (io/file tmpdir "payload" "original" "filename"))]
             (is (= ref (.toString 
@@ -327,6 +327,41 @@
           (is (= (re-find #" OK$" result) " OK")))
         )
       (fs/delete-dir tmpdir)
+      )
+    )
+  )
+
+(deftest prepare-export-to-storage-request
+  (testing "prepare request for export to storage"
+    (let  [payload (slurp "resources/export-request.json")
+           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
+      (h/save-request [[:no-metadata payload] tmpdir])
+      (h/prepare-marcxml2mods-request tmpdir)
+      (let [ metadata (-> (slurp "resources/marcxml2mods-response-metadata.clj")
+                          read-string
+                          (update-in [:headers] assoc "UUID" (.toString tmpdir)))
+            payload (slurp "resources/marcxml2mods-response-payload.json")
+            [mods mods-tmpdir] (-> [metadata payload]
+                                    h/save-marcxml2mods-response
+                                    h/parse-mods-files
+                                    h/add-urnnbn-to-mods)
+            [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
+            request-workdir (-> (h/make-package-with-foxml 
+                                 [mods mods-tmpdir] 
+                                 [oai_dcs oai-tmpdir] 
+                                 tmpdir
+                                 :fedora-import-dir "/var/fedora/import/"
+                                 :storage-dir "/var/edeposit_storage/archive"
+                                 )
+                                h/make-zip-package
+                                h/prepare-request-for-export-to-storage
+                                )
+            ]
+        (is (= request-workdir tmpdir))
+        (is (.isDirectory (io/file request-workdir "export-to-storage")))
+        (is (.isDirectory (io/file request-workdir "export-to-storage" "request")))
+        )
+      ;(fs/delete-dir tmpdir)
       )
     )
   )
