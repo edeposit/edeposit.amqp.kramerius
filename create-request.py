@@ -19,6 +19,7 @@ open('resources/export-request.json','wb').write(
               original = dict(filename=original_fname,
                               storage_path = storage_path,
                               mimetype='application/pdf'),
+              edeposit_url = "http://edeposit-application.nkp.cz/some-original",
               location_at_kramerius = location_at_kramerius,
               is_private = False,
           )

@@ -41,6 +41,7 @@
       (is (.exists (io/file tmpdir "payload")))
       (is (.exists (io/file tmpdir "payload" "uuid")))
       (is (.exists (io/file tmpdir "payload" "urnnbn")))
+      (is (.exists (io/file tmpdir "payload" "edeposit-url.txt")))
       (is (.exists (io/file tmpdir "payload" "location-at-kramerius")))
       (is (.exists (io/file tmpdir "payload" "is-private")))
       (is (.exists (io/file tmpdir "payload" "oai_marc.xml")))
@@ -238,7 +239,7 @@
 
 
 (deftest foxml-test
-  (testing "make FOXML"
+  (testing "make package with FOXML"
     (let  [payload (slurp "resources/export-request.json")
            tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
       (h/save-request [[:no-metadata payload] tmpdir])
@@ -252,7 +253,7 @@
                                     h/parse-mods-files
                                     h/add-urnnbn-to-mods)
             [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
-            [uuid fox-tmpdir] (h/make-foxml 
+            [uuid fox-tmpdir] (h/make-package-with-foxml 
                                [mods mods-tmpdir] 
                                [oai_dcs oai-tmpdir] 
                                tmpdir
@@ -264,22 +265,25 @@
         
         (is (= fox-tmpdir tmpdir mods-tmpdir))
         (is (.isDirectory (io/file result-dir)))
-        
+        (is (.exists      (io/file result-dir "edeposit-url.txt")))
+        (is (.isDirectory (io/file result-dir "first-page")))
+        (is (.exists (io/file result-dir "first-page" "filename")))
+        (is (.exists (io/file result-dir "first-page" "mimetype")))
+        (is (= (slurp (io/file (io/resource "robotandbaby_001.jp2")))
+               (slurp (io/file result-dir "first-page" "robotandbaby_001.jp2"))))
+
         (let [loc (-> (io/file result-dir (str uuid ".xml"))
                       io/input-stream
                       xml/parse
                       zip/xml-zip
                       )]
-          (let [ref (zx/xml1-> loc :datastream 
-                               [(zx/attr= :ID "IMG_FULL")] 
+          (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_FULL")] 
                                :datastreamVersion :contentLocation (zx/attr :REF)) 
-                filename (slurp (io/file tmpdir "payload" "original" "filename"))
-                ]
+                filename (slurp (io/file tmpdir "payload" "original" "filename"))]
             (is (= ref (.toString 
                         (io/file "file:/var/edeposit_storage/archive/" uuid filename))))
             )
-          (let [ref (zx/xml1-> loc :datastream 
-                               [(zx/attr= :ID "IMG_PREVIEW")] 
+          (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_PREVIEW")] 
                                :datastreamVersion :contentLocation (zx/attr :REF)) 
                 filename (slurp (io/file tmpdir "payload" "first-page" "filename"))
                 ]
@@ -308,15 +312,15 @@
                                     h/parse-mods-files
                                     h/add-urnnbn-to-mods)
             [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
-            [out-file zip-tmpdir] (-> (h/make-foxml 
-                                   [mods mods-tmpdir] 
-                                   [oai_dcs oai-tmpdir] 
-                                   tmpdir
-                                   :fedora-import-dir "/var/fedora/import/"
-                                   :storage-dir "/var/edeposit_storage/archive"
-                                   )
-                                  h/make-zip-package
-                                  )
+            [out-file zip-tmpdir] (-> (h/make-package-with-foxml 
+                                       [mods mods-tmpdir] 
+                                       [oai_dcs oai-tmpdir] 
+                                       tmpdir
+                                       :fedora-import-dir "/var/fedora/import/"
+                                       :storage-dir "/var/edeposit_storage/archive"
+                                       )
+                                      h/make-zip-package
+                                      )
             ]
         (is (.exists out-file))
         (let [result (->  (shell/sh "zip" "-T" (.toString out-file)) :out)]

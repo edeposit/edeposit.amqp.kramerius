@@ -43,7 +43,7 @@
                                   )
          requests-to-ssh-obs (->> mods-files-obs
                                   (r/map h/mods->oai_dcs)
-                                  (r/map h/make-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
+                                  (r/map h/make-package-with-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
                                   )]
     { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
      :requests-to-ssh requests-to-ssh-obs})

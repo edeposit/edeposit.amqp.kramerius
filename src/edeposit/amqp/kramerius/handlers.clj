@@ -41,7 +41,7 @@
     (spit (io/file workdir "payload" "urnnbn") (:urnnbn msg))
     (spit (io/file workdir "payload" "location-at-kramerius") (:location_at_kramerius msg))
     (spit (io/file workdir "payload" "is-private") (:is_private msg))
-    
+    (spit (io/file workdir "payload" "edeposit-url.txt") (:edeposit_url msg))
     (with-open [out (io/output-stream marcxml-file)]
       (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
     
@@ -143,7 +143,7 @@
 ;;      workdir]))
 
 
-(defn make-foxml
+(defn make-package-with-foxml
   [[mods mods-workdir] [oai_dcs oai-workdir] workdir & {:keys [fedora-import-dir storage-dir]} ]
   {:pre [(= workdir mods-workdir oai-workdir)]}
   (let [payload-dir (io/file workdir "payload")
@@ -169,6 +169,8 @@
           out-file (io/file result-dir (str uuid ".xml"))
           ]
       (spit out-file (u/emit foxml))
+      (fs/copy-dir (io/file workdir "payload" "first-page") result-dir)
+      (fs/copy (io/file workdir "payload" "edeposit-url.txt") (io/file result-dir "edeposit-url.txt"))
       [uuid workdir])))
 
 (defn make-zip-package
