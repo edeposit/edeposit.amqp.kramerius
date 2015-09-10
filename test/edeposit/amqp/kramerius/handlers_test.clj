@@ -293,67 +293,36 @@
     )
   )
 
-
-(comment
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
-
-    (h/save-request  [[nil payload] tmpdir])
-
-    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
-          payload (slurp "resources/marcxml2mods-response-payload.json")
-          actual-metadata (-> metadata (assoc :headers 
-                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
-          [mods tmpdir-0] (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
-          [oai_dcs tmpdir-1] (h/mods->oai_dcs [mods tmpdir-0])
-          [fname result-tmpdir] (h/make-foxml [mods tmpdir-0] [oai_dcs tmpdir-1] [full-file preview-file tmpdir-2] "/var/fedora/import/")
-          uuid (slurp (io/file result-tmpdir "uuid"))
-          ]
-
-      (is (= result-tmpdir  tmpdir))
-      (is (.exists (io/file result-tmpdir uuid)))
-      (is (.isDirectory (io/file result-tmpdir uuid)))
-      (is (.isDirectory (io/file result-tmpdir uuid "xml")))
-
-
-      )
-    (fs/delete-dir tmpdir)
-    )
-
-
-
-(comment
 (deftest zip-package-test
   (testing "make zip package"
-    (def payload (slurp "resources/export-request.json"))
-    (def tmpdir (fs/temp-dir "test-export-to-kramerius-request-"))
-
-    (h/save-request  [[nil payload] tmpdir])
-
-    (let [ metadata (read-string (slurp "resources/marcxml2mods-response-metadata.clj"))
-          payload (slurp "resources/marcxml2mods-response-payload.json")
-          actual-metadata (-> metadata (assoc :headers 
-                                              (-> metadata :headers (assoc "UUID" (.toString tmpdir)))))
-          [mods tmpdir-0] (h/parse-mods-files (h/save-marcxml2mods-response [actual-metadata payload]))
-          [oai_dcs tmpdir-1] (h/mods->oai_dcs [mods tmpdir-0])
-          [full-file preview-file tmpdir-2] (h/save-img-files [mods tmpdir-0])
-          [out-file result-tmpdir] (-> 
-                                 (h/make-foxml [mods tmpdir-0] 
-                                               [oai_dcs tmpdir-1] 
-                                               [full-file preview-file tmpdir-2] 
-                                               "/var/fedora/import/")
-                                 h/make-zip-package
-                                 )
-          uuid (slurp (io/file result-tmpdir "uuid"))
-          ]
-
-      (is (= (.toString result-tmpdir) (.toString tmpdir)))
-      (is (.exists out-file))
-      (let [result (->  (shell/sh "zip" "-T" (.toString out-file)) :out)]
-        (is (= (re-find #" OK$" result) " OK"))
+    (let  [payload (slurp "resources/export-request.json")
+           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
+      (h/save-request [[:no-metadata payload] tmpdir])
+      (h/prepare-marcxml2mods-request tmpdir)
+      (let [ metadata (-> (slurp "resources/marcxml2mods-response-metadata.clj")
+                          read-string
+                          (update-in [:headers] assoc "UUID" (.toString tmpdir)))
+            payload (slurp "resources/marcxml2mods-response-payload.json")
+            [mods mods-tmpdir] (-> [metadata payload]
+                                    h/save-marcxml2mods-response
+                                    h/parse-mods-files
+                                    h/add-urnnbn-to-mods)
+            [oai_dcs oai-tmpdir] (-> [mods mods-tmpdir] h/mods->oai_dcs)
+            [out-file zip-tmpdir] (-> (h/make-foxml 
+                                   [mods mods-tmpdir] 
+                                   [oai_dcs oai-tmpdir] 
+                                   tmpdir
+                                   :fedora-import-dir "/var/fedora/import/"
+                                   :storage-dir "/var/edeposit_storage/archive"
+                                   )
+                                  h/make-zip-package
+                                  )
+            ]
+        (is (.exists out-file))
+        (let [result (->  (shell/sh "zip" "-T" (.toString out-file)) :out)]
+          (is (= (re-find #" OK$" result) " OK")))
         )
+      (fs/delete-dir tmpdir)
       )
-    (fs/delete-dir tmpdir)
     )
   )
-)
