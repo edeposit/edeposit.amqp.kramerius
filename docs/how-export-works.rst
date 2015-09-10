@@ -51,20 +51,22 @@ Archiv obsahuje datové balíčky připravené k importu:
 ::
 
    jan@jan-XPS-L421X:~/$ tree e65d9072-2c9b-11e5-99fd-b8763f0a3d61
-   e65d9072-2c9b-11e5-99fd-b8763f0a3d61/
-   └── e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml
-   └── first-page.jp2
-   └── edeposit-url.txt
+   e65d9072-2c9b-11e5-99fd-b8763f0a3d61
+   ├── edeposit-url.txt
+   ├── e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml
+   └── first-page
+       ├── filename
+       ├── mimetype
+       └── robotandbaby_001.jp2
 
-   0 directories, 3 files
+   1 directory, 5 files
 
-
-jednotlivé soubory:
+jednotlivé soubory a adresáře:
 
  ========================================   =======================================
  e65d9072-2c9b-11e5-99fd-b8763f0a3d61.xml   ``FOXML`` soubor                         
  edeposit-url.txt                           soubor s odkazem do  aplikace eDeposit
- first-page.jp2                             náhled první strany
+ first-page                                 náhled první strany
  ========================================   =======================================  
 
 
