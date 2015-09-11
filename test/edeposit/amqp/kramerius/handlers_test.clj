@@ -372,9 +372,15 @@
         (is (.isDirectory (io/file request-workdir "export-to-storage" "request")))
         (let [request-dir (io/file request-workdir "export-to-storage" "request")
               deserialized-metadata (s/deserialize (slurp (io/file request-dir "metadata.clj"))
-                                                   s/clojure-content-type
-                                                   )]
+                                                   s/clojure-content-type)
+              deserialized-payload (s/deserialize (slurp (io/file request-dir "payload.bin"))
+                                                  s/json-content-type)
+              ]
           (is (= deserialized-metadata metadata))
+          (is (= deserialized-payload payload))
+          (is (= (.toString tmpdir) (-> deserialized-metadata :headers (get "UUID"))))
+          (is (= "80-251-0225-4" (-> deserialized-payload :isbn)))
+          (is (= "cnb001492461" (-> deserialized-payload :aleph_id)))
           )
         )
       (fs/delete-dir tmpdir)

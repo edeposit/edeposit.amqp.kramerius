@@ -191,7 +191,7 @@
   (.mkdir (io/file workdir "export-to-storage" "request"))
 
   (let [request-dir (io/file workdir "export-to-storage" "request")
-        metadata {:headers {"UUID" uuid}
+        metadata {:headers { "UUID" (.toString workdir)}
                   :content-type "edeposit/export-to-storage-request"
                   :content-encoding "application/json"
                   :persistent true}
@@ -202,6 +202,7 @@
                  :dir_pointer ""}
         ]
     (spit (io/file request-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
+    (spit (io/file request-dir "payload.bin") (s/serialize payload s/json-content-type))
     [metadata payload workdir]
     )
   )
