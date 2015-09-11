@@ -41,6 +41,8 @@
 
       (is (.exists (io/file tmpdir "payload")))
       (is (.exists (io/file tmpdir "payload" "uuid")))
+      (is (.exists (io/file tmpdir "payload" "aleph_id")))
+      (is (.exists (io/file tmpdir "payload" "isbn")))
       (is (.exists (io/file tmpdir "payload" "urnnbn")))
       (is (.exists (io/file tmpdir "payload" "edeposit-url.txt")))
       (is (.exists (io/file tmpdir "payload" "location-at-kramerius")))
@@ -66,6 +68,12 @@
 
       (is (= "urn:nbn:cz:mzk-0005ol" 
              (slurp (io/file tmpdir "payload" "urnnbn"))))
+
+      (is (= "80-251-0225-4"
+             (slurp (io/file tmpdir "payload" "isbn"))))
+
+      (is (= "cnb001492461" 
+             (slurp (io/file tmpdir "payload" "aleph_id"))))
 
       (is (= "/monografie/2001/John McCarthy/Robot and Baby" 
              (slurp (io/file tmpdir "payload" "location-at-kramerius"))))

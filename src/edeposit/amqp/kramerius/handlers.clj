@@ -40,6 +40,8 @@
     (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
     (spit (io/file workdir "payload" "uuid") (:uuid msg))
     (spit (io/file workdir "payload" "urnnbn") (:urnnbn msg))
+    (spit (io/file workdir "payload" "aleph_id") (:aleph_id msg))
+    (spit (io/file workdir "payload" "isbn") (:isbn msg))
     (spit (io/file workdir "payload" "location-at-kramerius") (:location_at_kramerius msg))
     (spit (io/file workdir "payload" "is-private") (:is_private msg))
     (spit (io/file workdir "payload" "edeposit-url.txt") (:edeposit_url msg))
@@ -193,7 +195,12 @@
                   :content-type "edeposit/export-to-storage-request"
                   :content-encoding "application/json"
                   :persistent true}
-        payload ""]
+        payload {:isbn (slurp (io/file workdir "payload" "isbn"))
+                 :uuid uuid
+                 :aleph_id (slurp (io/file workdir "payload" "aleph_id"))
+                 :b64_data ""
+                 :dir_pointer ""}
+        ]
     (spit (io/file request-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
     [metadata payload workdir]
     )
