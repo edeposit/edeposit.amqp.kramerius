@@ -190,20 +190,24 @@
   (.mkdir (io/file workdir "export-to-storage"))
   (.mkdir (io/file workdir "export-to-storage" "request"))
 
-  (let [request-dir (io/file workdir "export-to-storage" "request")
-        metadata {:headers { "UUID" (.toString workdir)}
-                  :content-type "edeposit/export-to-storage-request"
-                  :content-encoding "application/json"
-                  :persistent true}
-        payload {:isbn (slurp (io/file workdir "payload" "isbn"))
-                 :uuid uuid
-                 :aleph_id (slurp (io/file workdir "payload" "aleph_id"))
-                 :b64_data ""
-                 :dir_pointer ""}
-        ]
-    (spit (io/file request-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
-    (spit (io/file request-dir "payload.bin") (s/serialize payload s/json-content-type))
-    [metadata payload workdir]
+  (let [zip-file-b64 (io/file (str (.toString zip-file) ".b64"))]
+    (with-open [out (io/output-stream zip-file-b64 )]
+      (.write out (Base64/encodeBase64 (.getBytes (slurp zip-file)))))
+    (let [request-dir (io/file workdir "export-to-storage" "request")
+          metadata {:headers { "UUID" (.toString workdir)}
+                    :content-type "edeposit/export-to-storage-request"
+                    :content-encoding "application/json"
+                    :persistent true}
+          payload {:isbn (slurp (io/file workdir "payload" "isbn"))
+                   :uuid uuid
+                   :aleph_id (slurp (io/file workdir "payload" "aleph_id"))
+                   :b64_data (slurp zip-file-b64)
+                   :dir_pointer ""}
+          ]
+      (spit (io/file request-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
+      (spit (io/file request-dir "payload.bin") (s/serialize payload s/json-content-type))
+      [metadata payload workdir]
+      )
     )
   )
 
