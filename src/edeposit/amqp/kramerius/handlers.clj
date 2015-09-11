@@ -147,7 +147,7 @@
 
 
 (defn make-package-with-foxml
-  [[mods mods-workdir] [oai_dcs oai-workdir] workdir & {:keys [fedora-import-dir storage-dir]} ]
+  [[mods mods-workdir] [oai_dcs oai-workdir] workdir]
   {:pre [(= workdir mods-workdir oai-workdir)]}
   (let [payload-dir (io/file workdir "payload")
         uuid (slurp (io/file payload-dir "uuid"))
@@ -166,8 +166,6 @@
                           :label "ahoj"
                           :created (t/now)
                           :last-modified (t/now)
-                          :fedora-import-dir fedora-import-dir
-                          :storage-dir storage-dir
                           })
           out-file (io/file result-dir (str uuid ".xml"))
           ]

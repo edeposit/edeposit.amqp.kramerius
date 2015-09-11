@@ -265,10 +265,7 @@
             [uuid fox-tmpdir] (h/make-package-with-foxml 
                                [mods mods-tmpdir] 
                                [oai_dcs oai-tmpdir] 
-                               tmpdir
-                               :fedora-import-dir "/var/fedora/import/"
-                               :storage-dir "/var/edeposit_storage/archive"
-                               )
+                               tmpdir)
             result-dir (io/file fox-tmpdir uuid)
             ]
         
@@ -288,16 +285,12 @@
                       )]
           (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_FULL")]
                                :datastreamVersion :contentLocation (zx/attr :REF)) 
-                filename (slurp (io/file tmpdir "payload" "original" "filename"))]
-            (is (= ref (.toString 
-                        (io/file "file:/var/edeposit_storage/archive/" uuid filename))))
-            )
+                storage_path (slurp (io/file tmpdir "payload" "original" "storage_path"))]
+            (is (= ref (str "file:" storage_path))))
           (let [ref (zx/xml1-> loc :datastream [(zx/attr= :ID "IMG_PREVIEW")] 
                                :datastreamVersion :contentLocation (zx/attr :REF)) 
-                filename (slurp (io/file tmpdir "payload" "first-page" "filename"))
-                ]
-            (is (=  ref (.toString 
-                         (io/file "file:/var/edeposit_storage/archive" uuid filename))))
+                filename (slurp (io/file tmpdir "payload" "first-page" "filename"))]
+            (is (=  ref (str "file:" filename)))
             )
           )
         )
@@ -324,10 +317,7 @@
             [out-file uuid zip-tmpdir] (-> (h/make-package-with-foxml 
                                             [mods mods-tmpdir] 
                                             [oai_dcs oai-tmpdir] 
-                                            tmpdir
-                                            :fedora-import-dir "/var/fedora/import/"
-                                            :storage-dir "/var/edeposit_storage/archive"
-                                            )
+                                            tmpdir)
                                            h/make-zip-package
                                            )
             ]
@@ -359,10 +349,7 @@
             [metadata payload request-workdir] (-> (h/make-package-with-foxml 
                                                     [mods mods-tmpdir] 
                                                     [oai_dcs oai-tmpdir] 
-                                                    tmpdir
-                                                    :fedora-import-dir "/var/fedora/import/"
-                                                    :storage-dir "/var/edeposit_storage/archive"
-                                                    )
+                                                    tmpdir)
                                                    h/make-zip-package
                                                    h/prepare-request-for-export-to-storage
                                                    )
