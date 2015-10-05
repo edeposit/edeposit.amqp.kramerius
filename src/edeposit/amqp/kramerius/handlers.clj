@@ -1,19 +1,20 @@
 (ns edeposit.amqp.kramerius.handlers
-  (:require [me.raynes.fs :as fs]
-            [langohr.basic     :as lb]
-            [clojure.data.json :as json]
-            [clojure.java.io :as io]
-            [clojure.tools.logging :as log]
-            [clojure.pprint :as pp]
+  (:require [clj-time.core :as t]
+            [clj-time.local :as lt]
             [clojure.data.json :as json]
             [clojure.data.xml :as xml]
-            [clj-time.core :as t]
-            [edeposit.amqp.kramerius.xml.mods :as m]
-            [edeposit.amqp.kramerius.xml.foxml :as f]
-            [edeposit.amqp.kramerius.xml.utils :as u]
+            [clojure.java.io :as io]
             [clojure.java.shell :as shell]
+            [clojure.pprint :as pp]
+            [clojure.string :as cs]
+            [clojure.tools.logging :as log]
             [clojurewerkz.serialism.core :as s]
-            )
+            [clojure.xml :as x]
+            [edeposit.amqp.kramerius.xml.foxml :as f]
+            [edeposit.amqp.kramerius.xml.mods :as m]
+            [edeposit.amqp.kramerius.xml.utils :as u]
+            [langohr.basic     :as lb]
+            [me.raynes.fs :as fs])
   (:import [org.apache.commons.codec.binary Base64])
   )
 
@@ -31,24 +32,24 @@
 (defn save-request
   "it returns name of a directory where payload is saved"
   [[[metadata payload] workdir]]
-  (spit (io/file workdir "payload.bin") payload)
-  (.mkdir (io/file workdir "payload"))
-  (spit (io/file workdir "metadata.clj") metadata)
+  (fs/mkdirs (io/file workdir "request" "payload"))
+  (spit (io/file workdir "request" "payload.bin") payload)
+  (spit (io/file workdir "request" "metadata.clj") metadata)
   (let [msg (json/read-str (String. payload) :key-fn keyword) 
-        marcxml-file (io/file  workdir "payload" "oai_marc.xml")]
+        marcxml-file (io/file  workdir "request" "payload" "oai_marc.xml")]
     (log/info "save export request to" workdir)  
     (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
-    (spit (io/file workdir "payload" "uuid") (:uuid msg))
-    (spit (io/file workdir "payload" "urnnbn") (:urnnbn msg))
-    (spit (io/file workdir "payload" "aleph_id") (:aleph_id msg))
-    (spit (io/file workdir "payload" "isbn") (:isbn msg))
-    (spit (io/file workdir "payload" "location-at-kramerius") (:location_at_kramerius msg))
-    (spit (io/file workdir "payload" "is-private") (:is_private msg))
-    (spit (io/file workdir "payload" "edeposit-url.txt") (:edeposit_url msg))
+    (spit (io/file workdir "request" "payload" "uuid") (:uuid msg))
+    (spit (io/file workdir "request" "payload" "urnnbn") (:urnnbn msg))
+    (spit (io/file workdir "request" "payload" "aleph_id") (:aleph_id msg))
+    (spit (io/file workdir "request" "payload" "isbn") (:isbn msg))
+    (spit (io/file workdir "request" "payload" "location-at-kramerius") (:location_at_kramerius msg))
+    (spit (io/file workdir "request" "payload" "is-private") (:is_private msg))
+    (spit (io/file workdir "request" "payload" "edeposit-url.txt") (:edeposit_url msg))
     (with-open [out (io/output-stream marcxml-file)]
       (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
     
-    (let [out-dir (io/file workdir "payload" "first-page")
+    (let [out-dir (io/file workdir "request" "payload" "first-page")
           first-page (-> msg :first_page)
           ]
       (.mkdir out-dir)
@@ -57,7 +58,7 @@
       (with-open [out (io/output-stream (io/file out-dir (-> first-page :filename)))]
         (.write out (Base64/decodeBase64 (-> first-page :b64_data)))))
     
-    (let [out-dir (io/file workdir "payload" "original")
+    (let [out-dir (io/file workdir "request" "payload" "original")
           original (-> msg :original)
           ]
       (.mkdir out-dir)
@@ -77,8 +78,8 @@
   (.mkdir (io/file workdir "marcxml2mods" "request"))
 
   [{:uuid (.toString workdir)}
-   {:marc_xml (slurp (io/file workdir "payload" "oai_marc.xml"))
-    :uuid (slurp (io/file workdir "payload" "uuid"))
+   {:marc_xml (slurp (io/file workdir "request" "payload" "oai_marc.xml"))
+    :uuid (slurp (io/file workdir "request" "payload" "uuid"))
     }])
 
 (defn save-marcxml2mods-response
@@ -116,40 +117,17 @@
 
 (defn add-urnnbn-to-mods
   [[mods workdir]]
-  (let [urnnbn (slurp (io/file workdir "payload" "urnnbn"))]
+  (let [urnnbn (slurp (io/file workdir "request" "payload" "urnnbn"))]
     [(map (fn [one-mods] (m/with-urnnbn-identifier one-mods urnnbn)) mods) workdir]))
 
 (defn mods->oai_dcs
   [[mods workdir]]
   [(map m/mods->oai_dc mods) workdir])
 
-;; (defn save-img-files
-;;   [[mods_files workdir]]
-;;   (let [uuid (slurp (io/file workdir "uuid"))
-;;         slurp-img-full (comp slurp (partial io/file workdir "img_full"))
-;;         slurp-img-preview (comp slurp (partial io/file workdir "img_preview"))
-;;         ]
-;;     (.mkdir (io/file workdir uuid))
-;;     (.mkdir (io/file workdir uuid "img"))
-;;     (fs/copy (io/file workdir "img_full" (slurp-img-full "filename")) 
-;;              (io/file workdir uuid "img" (slurp-img-full "filename")))
-;;     (fs/copy (io/file workdir "img_preview" (slurp-img-preview "filename")) 
-;;              (io/file workdir uuid "img" (slurp-img-preview "filename")))
-;;     [{:type :img_full
-;;       :mimetype (slurp-img-full "mimetype")
-;;       :filename (slurp-img-full "filename")
-;;       }
-;;      {:type :img_preview
-;;       :mimetype (slurp-img-preview "mimetype")
-;;       :filename (slurp-img-preview "filename")
-;;       } 
-;;      workdir]))
-
-
 (defn make-package-with-foxml
   [[mods mods-workdir] [oai_dcs oai-workdir] workdir]
   {:pre [(= workdir mods-workdir oai-workdir)]}
-  (let [payload-dir (io/file workdir "payload")
+  (let [payload-dir (io/file workdir "request" "payload")
         uuid (slurp (io/file payload-dir "uuid"))
         result-dir (io/file workdir uuid)
         full-file {:mimetype (slurp (io/file payload-dir "original" "mimetype"))
@@ -164,14 +142,15 @@
     (let [foxml (f/foxml mods oai_dcs full-file preview-file
                          {:uuid uuid 
                           :label "ahoj"
-                          :created (t/now)
-                          :last-modified (t/now)
+                          :created (lt/local-now)
+                          :last-modified (lt/local-now)
                           })
           out-file (io/file result-dir (str uuid ".xml"))
           ]
       (spit out-file (u/emit foxml))
-      (fs/copy-dir (io/file workdir "payload" "first-page") result-dir)
-      (fs/copy (io/file workdir "payload" "edeposit-url.txt") (io/file result-dir "edeposit-url.txt"))
+      (fs/copy-dir (io/file workdir "request" "payload" "first-page") result-dir)
+      (fs/copy (io/file workdir "request" "payload" "edeposit-url.txt") 
+               (io/file result-dir "edeposit-url.txt"))
       [uuid workdir])))
 
 (defn make-zip-package
@@ -185,9 +164,7 @@
 (defn prepare-request-for-export-to-storage
   [[zip-file uuid workdir]]
 
-  (.mkdir (io/file workdir "export-to-storage"))
-  (.mkdir (io/file workdir "export-to-storage" "request"))
-
+  (fs/mkdirs (io/file workdir "export-to-storage" "request"))
   (let [zip-file-b64 (io/file (str (.toString zip-file) ".b64"))]
     (with-open [out (io/output-stream zip-file-b64 )]
       (.write out (Base64/encodeBase64 (.getBytes (slurp zip-file)))))
@@ -196,9 +173,9 @@
                     :content-type "edeposit/export-to-storage-request"
                     :content-encoding "application/json"
                     :persistent true}
-          payload {:isbn (slurp (io/file workdir "payload" "isbn"))
+          payload {:isbn (slurp (io/file workdir "request" "payload" "isbn"))
                    :uuid uuid
-                   :aleph_id (slurp (io/file workdir "payload" "aleph_id"))
+                   :aleph_id (slurp (io/file workdir "request" "payload" "aleph_id"))
                    :b64_data (slurp zip-file-b64)
                    :dir_pointer ""}
           ]
@@ -207,6 +184,72 @@
       [metadata payload workdir]
       )
     )
+  )
+
+(defn save-response-from-export-to-storage
+  [metadata ^bytes payload]
+  (let [msg (json/read-str (String. payload) :key-fn keyword)
+        workdir (io/file (-> metadata :headers (get "UUID")))]
+    (if (.exists workdir)
+      (let [response-dir (io/file workdir "export-to-storage" "response")]
+        (fs/mkdirs (io/file response-dir "payload"))
+        (spit (io/file response-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
+        (io/copy payload (io/file response-dir "payload.bin"))
+        [msg workdir])
+      (do
+        (log/error "workdir:" (.toString workdir) "doesnot exists!")
+        [msg nil])
+      )
+    )
+  )
+
+(defn prepare-scp-to-kramerius
+  [[{:keys [dir_pointer] :as msg} workdir] & {:keys [import-mount archive-mount originals-mount]}]
+  {:pre [(some? import-mount)
+         (some? archive-mount)
+         (some? originals-mount)
+         ]}
+  (let [uuid (slurp (io/file workdir "request" "payload" "uuid"))]
+    (let [request-dir (io/file workdir "scp-to-kramerius" "request")
+          foxml-fname (str uuid ".xml")]
+      (fs/mkdirs request-dir)
+      (spit (io/file workdir "scp-to-kramerius" "dir_pointer") dir_pointer)
+      (spit (io/file request-dir "from") (.toString (io/file request-dir foxml-fname)))
+      (spit (io/file request-dir "to")
+            (str "/" 
+                 (cs/join "/" 
+                          (map (fn [path] (-> path 
+                                             (cs/replace #"^file:" "") 
+                                             (cs/replace #"^[/]+"  "")))
+                               [import-mount foxml-fname]))))
+      (let [root (-> (io/file workdir uuid foxml-fname)
+                     io/input-stream
+                     x/parse)]
+        (-> root
+            (f/update-rels archive-mount dir_pointer originals-mount)
+            u/emit
+            (io/copy (io/file request-dir foxml-fname)))
+        )
+      )
+    [workdir]
+    )
+  )
+
+(defn scp-to-kramerius
+  [[workdir] {:keys [scp]}]
+  "scp is a function: (fn [from-path to-path])"
+  (let [out-dir (io/file workdir "scp-to-kramerius" "response")
+        request-dir (io/file workdir "scp-to-kramerius" "request")
+        to-path (slurp (io/file request-dir "to"))
+        from-path (slurp (io/file request-dir "from"))
+        ]
+    (fs/mkdirs out-dir)
+    (let [result (scp from-path to-path)]
+      (spit (io/file out-dir "result") result)
+      (spit (io/file out-dir "sent") (.toString (lt/local-now)))
+      )
+    )
+  [workdir]
   )
 
 (defn parse-and-export [metadata ^bytes payload]
