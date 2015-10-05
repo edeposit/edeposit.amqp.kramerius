@@ -4,7 +4,10 @@
             [clojure.zip :as zip]
             [clojure.pprint :as pp]
             [clojure.java.io :as io]
+            [clojure.string :as s]
+            [clojure.xml :as x]
             [me.raynes.fs :as fs]
+            [clojure.java.shell :as shell]
             )
   )
 
@@ -63,15 +66,61 @@
       [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_FULL"}
        [:foxml:datastreamVersion {:MIMETYPE (-> full-file :mimetype) :CREATED created :ID "IMG_FULL.0"}
         [:foxml:contentLocation 
-         {:REF (str "file:" (-> full-file :storage_path))
-          :TYPE "URL"}]]]
+         {:REF (str "file:" (-> full-file :storage_path)) :TYPE "URL"}]]]
       
       [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_PREVIEW"}
        [:foxml:datastreamVersion {:MIMETYPE (-> preview-file :mimetype) :CREATED created :ID "IMG_PREVIEW.0"}
         [:foxml:contentLocation 
-         {:REF (str "file:" (-> preview-file :filename))
-          :TYPE "URL"}]]]
+         {:REF (str "file:first-page/" (-> preview-file :filename)) :TYPE "URL"}]]]
       ]
      )
     )
   )
+
+(defn update-rels
+  [root archive-mount dir-pointer originals-mount]
+  (let [loc (-> root zip/xml-zip)]
+    (let [new-full-ref (fn [ref]
+                         (str "file:///"
+                              (s/join "/" 
+                                      (map (fn [path] (-> path 
+                                                         (s/replace #"^file:" "") 
+                                                         (s/replace #"^[/]+" "")))
+                                           [originals-mount ref]))))
+          new-preview-ref (fn [ref]
+                            (str "file:///"
+                                 (s/join "/" 
+                                         (map (fn [path] (-> path 
+                                                            (s/replace #"^file:" "") 
+                                                            (s/replace #"^[/]+" "")))
+                                              [archive-mount dir-pointer ref]))))
+          ]
+      (-> (zx/xml1-> loc :foxml:datastream [(zx/attr= :ID "IMG_FULL")]
+                     :foxml:datastreamVersion :foxml:contentLocation)
+          (zip/edit update-in [:attrs] update-in [:REF] new-full-ref)
+          (zip/root)
+          (zip/xml-zip)
+          (zx/xml1-> :foxml:datastream [(zx/attr= :ID "IMG_PREVIEW")]
+                     :foxml:datastreamVersion :foxml:contentLocation)
+          (zip/edit update-in [:attrs] update-in [:REF] new-preview-ref)
+          (zip/root)
+        )
+      )
+    )
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
