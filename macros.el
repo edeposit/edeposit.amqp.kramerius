@@ -1,9 +1,8 @@
-(project-shell "*shell*" "/home/jan/work/edeposit.amqp.kramerius")
 (project-shell "*cmd*" "/home/jan/work/edeposit.amqp.kramerius")
-(project-shell "*tests*" "/home/jan/work/edeposit.amqp.kramerius")
 (project-shell "*docs*" "/home/jan/work/edeposit.amqp.kramerius/docs")
 (project-shell "*docs-serve*" "/home/jan/work/edeposit.amqp.kramerius/docs")
-
+(project-shell "*shell*" "/home/jan/work/edeposit.amqp.kramerius")
+(project-shell "*tests*" "/home/jan/work/edeposit.amqp.kramerius")
 
 (project-task send-message "*cmd*" "./send-message.sh")
 (project-task run-amqp "*shell*" "lein run -- --amqp")
