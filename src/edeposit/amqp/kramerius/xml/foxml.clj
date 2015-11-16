@@ -71,7 +71,7 @@
       [:foxml:datastream {:VERSIONABLE "false" :STATE "A" :CONTROL_GROUP "E" :ID "IMG_PREVIEW"}
        [:foxml:datastreamVersion {:MIMETYPE (-> preview-file :mimetype) :CREATED created :ID "IMG_PREVIEW.0"}
         [:foxml:contentLocation 
-         {:REF (str "file:first-page/" (-> preview-file :filename)) :TYPE "URL"}]]]
+         {:REF (str "file:preview-page/" (-> preview-file :filename)) :TYPE "URL"}]]]
       ]
      )
     )
@@ -108,19 +108,3 @@
       )
     )
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

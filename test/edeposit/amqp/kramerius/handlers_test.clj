@@ -21,8 +21,7 @@
   (testing "add tmpdir to request"
     (let [payload (slurp "resources/export-request.json")
           [[metadata payload] tmpdir] (-> [:no-metadata payload]
-                                          h/request-with-tmpdir)
-          ]
+                                          h/request-with-tmpdir)]
       (is (.exists tmpdir))
       (is (= metadata :no-metadata))
       (is (= payload (slurp "resources/export-request.json")))
@@ -35,15 +34,14 @@
   (testing "save request payload"
     (let [payload (slurp "resources/export-request.json")
           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
-          result (-> [[:no-metadata payload] tmpdir] 
-                     h/save-request )
+          result (-> [[:no-metadata ^bytes payload] tmpdir] 
+                     h/save-request)
           ]
       (is (.exists tmpdir))
       (is (= tmpdir result))
       (is (.exists (io/file tmpdir "request")))
       (is (.exists (io/file tmpdir "request" "payload.bin")))
       (is (.exists (io/file tmpdir "request" "metadata.clj")))
-
       (is (.exists (io/file tmpdir "request" "payload")))
       (is (.exists (io/file tmpdir "request" "payload" "uuid")))
       (is (.exists (io/file tmpdir "request" "payload" "aleph_id")))
@@ -52,13 +50,14 @@
       (is (.exists (io/file tmpdir "request" "payload" "edeposit-url.txt")))
       (is (.exists (io/file tmpdir "request" "payload" "location-at-kramerius")))
       (is (.exists (io/file tmpdir "request" "payload" "is-private")))
+      (is (.exists (io/file tmpdir "request" "payload" "preview-page-position")))
       (is (.exists (io/file tmpdir "request" "payload" "oai_marc.xml")))
       (is (.exists (io/file tmpdir "request" "payload" "oai_marc.xml.b64")))
+      
+      (is (.exists (io/file tmpdir "request" "payload" "preview-page")))
 
-      (is (.exists (io/file tmpdir "request" "payload" "first-page")))
-      (is (.exists (io/file tmpdir "request" "payload" "first-page" "robotandbaby_001.jp2")))
-      (is (.exists (io/file tmpdir "request" "payload" "first-page" "mimetype")))
-      (is (.exists (io/file tmpdir "request" "payload" "first-page" "filename")))
+      (is (.exists (io/file tmpdir "request" "payload" "preview-page" "mimetype")))
+      (is (.exists (io/file tmpdir "request" "payload" "preview-page" "filename")))
 
       (is (.exists (io/file tmpdir "request" "payload" "original")))
       (is (.exists (io/file tmpdir "request" "payload" "original" "storage_path")))
@@ -84,10 +83,28 @@
              (slurp (io/file tmpdir "request" "payload" "location-at-kramerius"))))
        
       (is (= "robotandbaby_001.jp2" 
-             (slurp (io/file tmpdir "request" "payload" "first-page" "filename"))))
+             (slurp (io/file tmpdir "request" "payload" "preview-page" "filename"))))
 
       (is (= "image/jp2" 
-             (slurp (io/file tmpdir "request" "payload" "first-page" "mimetype"))))
+             (slurp (io/file tmpdir "request" "payload" "preview-page" "mimetype"))))
+      (fs/delete-dir tmpdir)       
+      )
+    )
+  )
+
+(deftest make-preview-page-test
+  (testing "make preview page test"
+    (let [payload (slurp "resources/export-request.json")
+          tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
+          result (-> [[:no-metadata payload] tmpdir]
+                     h/save-request
+                     h/make-preview-page
+                     )]
+      (let [img (io/file tmpdir "request" "payload" "preview-page" "robotandbaby_001.jp2") ]
+        (is (.exists img))
+        (let [process (shell/sh "file" (.toString img))]
+          (is (re-find #"JPEG 2000" (:out process))))
+        )
       (fs/delete-dir tmpdir)       
       )
     )
@@ -99,12 +116,12 @@
           tmpdir (fs/temp-dir "test-export-to-kramerius-request-")
           ]
       (h/save-request [[:no-metadata payload] tmpdir])
-      (let [[headers {:keys [:marc_xml :uuid]}] (-> tmpdir 
-                                                    h/prepare-marcxml2mods-request)
+      (let [[metadata {:keys [:marc_xml :uuid]}] (-> tmpdir 
+                                                     h/prepare-marcxml2mods-request)
             ]
         (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61" uuid))
         (is (.exists (io/file tmpdir "marcxml2mods")))
-        (is (= (.toString tmpdir) (-> headers :uuid))))
+        (is (= (.toString tmpdir) (-> metadata (get :headers) (get "UUID")))))
       (fs/delete-dir tmpdir)
       )
     )
@@ -251,12 +268,13 @@
      )
    )
 
-
 (deftest foxml-test
   (testing "make package with FOXML"
     (let  [payload (slurp "resources/export-request.json")
            tmpdir (fs/temp-dir "test-export-to-kramerius-request-")]
-      (h/save-request [[:no-metadata payload] tmpdir])
+      (-> [[:no-metadata payload] tmpdir]
+          h/save-request
+          h/make-preview-page)
       (h/prepare-marcxml2mods-request tmpdir)
       (let [ metadata (-> (slurp "resources/communication-with-marcxml2mods/response/metadata.clj")
                           read-string
@@ -277,11 +295,9 @@
         (is (= fox-tmpdir tmpdir mods-tmpdir))
         (is (.isDirectory (io/file result-dir)))
         (is (.exists      (io/file result-dir "edeposit-url.txt")))
-        (is (.isDirectory (io/file result-dir "first-page")))
-        (is (.exists (io/file result-dir "first-page" "filename")))
-        (is (.exists (io/file result-dir "first-page" "mimetype")))
-        (is (= (slurp (io/file (io/resource "robotandbaby_001.jp2")))
-               (slurp (io/file result-dir "first-page" "robotandbaby_001.jp2"))))
+        (is (.isDirectory (io/file result-dir "preview-page")))
+        (is (.exists (io/file result-dir "preview-page" "filename")))
+        (is (.exists (io/file result-dir "preview-page" "mimetype")))
 
         (let [loc (-> (io/file result-dir (str uuid ".xml"))
                       io/input-stream
@@ -294,8 +310,8 @@
             (is (= ref (str "file:" storage_path))))
           (let [ref (zx/xml1-> loc :foxml:datastream [(zx/attr= :ID "IMG_PREVIEW")] 
                                :foxml:datastreamVersion :foxml:contentLocation (zx/attr :REF)) 
-                filename (slurp (io/file tmpdir "request" "payload" "first-page" "filename"))]
-            (is (=  ref (str "file:first-page/" filename)))
+                filename (slurp (io/file tmpdir "request" "payload" "preview-page" "filename"))]
+            (is (=  ref (str "file:preview-page/" filename)))
             )
           )
         )
@@ -464,7 +480,7 @@
                      (zx/xml1-> loc :foxml:datastream [(zx/attr= :ID "IMG_FULL")] 
                                 :foxml:datastreamVersion
                                 :foxml:contentLocation (zx/attr :REF))))
-              (is (= (str "file:///var/edeposit_archive" dir_pointer "/first-page/robotandbaby_001.jp2")
+              (is (= (str "file:///var/edeposit_archive" dir_pointer "/preview-page/robotandbaby_001.jp2")
                      (zx/xml1-> loc :foxml:datastream [(zx/attr= :ID "IMG_PREVIEW")]
                                 :foxml:datastreamVersion
                                 :foxml:contentLocation (zx/attr :REF))))
@@ -532,5 +548,3 @@
       )
     )
   )
-
-

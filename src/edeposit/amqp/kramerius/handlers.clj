@@ -26,80 +26,111 @@
 (defn request-with-tmpdir
   "It creates tmpdir and add it to request data"
   [[metadata payload]]
+  (log/info "received new message")
   (let [tmpdir (fs/temp-dir "export-to-kramerius-request-")]
-    [[metadata payload] tmpdir]))
+    (log/info "handlers will user dir" (.toString tmpdir))
+    [[metadata payload] tmpdir])
+  )
 
 (defn save-request
   "it returns name of a directory where payload is saved"
   [[[metadata payload] workdir]]
-  (fs/mkdirs (io/file workdir "request" "payload"))
-  (spit (io/file workdir "request" "payload.bin") payload)
-  (spit (io/file workdir "request" "metadata.clj") metadata)
-  (let [msg (json/read-str (String. payload) :key-fn keyword) 
-        marcxml-file (io/file  workdir "request" "payload" "oai_marc.xml")]
-    (log/info "save export request to" workdir)  
-    (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
-    (spit (io/file workdir "request" "payload" "uuid") (:uuid msg))
-    (spit (io/file workdir "request" "payload" "urnnbn") (:urnnbn msg))
-    (spit (io/file workdir "request" "payload" "aleph_id") (:aleph_id msg))
-    (spit (io/file workdir "request" "payload" "isbn") (:isbn msg))
-    (spit (io/file workdir "request" "payload" "location-at-kramerius") (:location_at_kramerius msg))
-    (spit (io/file workdir "request" "payload" "is-private") (:is_private msg))
-    (spit (io/file workdir "request" "payload" "edeposit-url.txt") (:edeposit_url msg))
-    (with-open [out (io/output-stream marcxml-file)]
-      (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
-    
-    (let [out-dir (io/file workdir "request" "payload" "first-page")
-          first-page (-> msg :first_page)
-          ]
-      (.mkdir out-dir)
-      (spit (io/file out-dir "mimetype") (-> first-page :mimetype))
-      (spit (io/file out-dir "filename") (-> first-page :filename))
-      (with-open [out (io/output-stream (io/file out-dir (-> first-page :filename)))]
-        (.write out (Base64/decodeBase64 (-> first-page :b64_data)))))
-    
-    (let [out-dir (io/file workdir "request" "payload" "original")
-          original (-> msg :original)
-          ]
-      (.mkdir out-dir)
-      (spit (io/file out-dir "mimetype") (-> original :mimetype))
-      (spit (io/file out-dir "filename") (-> original :filename))
-      (spit (io/file out-dir "storage_path") (-> original :storage_path)))
+  (log/info "saving request at" (.toString workdir))
+  (when (not (= :no-dir workdir))
+    (fs/mkdirs (io/file workdir "request" "payload"))
+    (spit (io/file workdir "request" "payload.bin") (String. payload))
+    (spit (io/file workdir "request" "metadata.clj") metadata)
+    (let [msg (json/read-str (String. payload) :key-fn keyword) 
+          marcxml-file (io/file workdir "request" "payload" "oai_marc.xml")]
+      (spit (-> marcxml-file .toString (.concat ".b64")) (:b64_marcxml msg))
+      (spit (io/file workdir "request" "payload" "uuid") (:uuid msg))
+      (spit (io/file workdir "request" "payload" "urnnbn") (:urnnbn msg))
+      (spit (io/file workdir "request" "payload" "aleph_id") (:aleph_id msg))
+      (spit (io/file workdir "request" "payload" "isbn") (:isbn msg))
+      (spit (io/file workdir "request" "payload" "location-at-kramerius") (:location_at_kramerius msg))
+      (spit (io/file workdir "request" "payload" "is-private") (:is_private msg))
+      (spit (io/file workdir "request" "payload" "edeposit-url.txt") (:edeposit_url msg))
+      (spit (io/file workdir "request" "payload" "preview-page-position") (:first_page_position msg))
+      
+      (with-open [out (io/output-stream marcxml-file)]
+        (.write out (Base64/decodeBase64 (:b64_marcxml msg))))
+
+      (let [preview-page-dir (io/file workdir "request" "payload" "preview-page")
+            preview-page-filename (str (cs/replace (-> msg :original :filename) #"\.[^\.]*$" "") "_001.jp2")]
+        (fs/mkdirs preview-page-dir)
+        (spit (io/file preview-page-dir "filename") preview-page-filename)
+        (spit (io/file preview-page-dir "mimetype") "image/jp2"))
+
+      (let [out-dir (io/file workdir "request" "payload" "original")
+            original (-> msg :original)]
+        (.mkdir out-dir)
+        (spit (io/file out-dir "filename") (-> original :filename))
+        (spit (io/file out-dir "storage_path") (-> original :storage_path))
+        (spit (io/file out-dir "mimetype") (-> original :mimetype))
+        (with-open [out (io/output-stream (io/file out-dir (-> original :filename)))]
+          (.write out (Base64/decodeBase64 (-> original :b64_data))))
+        )
+      )
+    )
+  workdir
+  )
+
+(defn make-preview-page
+  [workdir]
+  "from saved signal"
+  "pdftk - first page
+  gm convert pdf -> jp2000"
+  (when (not (= :no-dir workdir))
+    (let [payload-dir (io/file workdir "request" "payload")
+          in (io/file payload-dir "original" (slurp (io/file payload-dir "original" "filename")))
+          preview (io/file payload-dir "preview-page" (slurp (io/file payload-dir "preview-page" "filename")))
+          preview-base (str (cs/replace (.toString preview) #"\.[^\.]+$" "") "-preview")
+          preview-page-position (slurp (io/file payload-dir "preview-page-position"))]
+      (let [output (-> (shell/sh "pdftk" (.toString in)
+                                 "cat"   preview-page-position
+                                 "output" (str preview-base ".pdf") "verbose") :out)]
+        (when (not (and (re-find #"Command Line Data is valid\." output)
+                        (re-find #"Adding page [0-9]" output)))
+          (throw (Exception. (str "problem with running pdftk:" output))))
+        (let [result (-> (shell/sh "gm" "convert" (str preview-base ".pdf") (.toString preview)))]
+          (when (not (= (:exit result) 0))
+            (throw (Exception. (str "converting preview file to jp2: " (prn-str result)))))
+          (let [result (-> (shell/sh "gm" "identify" (.toString preview)))]
+            (when (not (.contains (:out result) " JP2 "))
+              (throw (Exception. (str "preview file is not identified ad JP2: " (prn-str result)))))
+            )
+          )
+        )
+      )
     )
   workdir
   )
 
 (defn prepare-marcxml2mods-request
   [workdir]
-  
   (log/info "prepare marcxml2mods request at" workdir)
-
-  (.mkdir (io/file workdir "marcxml2mods"))
-  (.mkdir (io/file workdir "marcxml2mods" "request"))
-
-  [{:uuid (.toString workdir)}
+  (fs/mkdirs (io/file workdir "marcxml2mods" "request"))
+  [{:headers {"UUID" (.toString workdir)}
+    :content-type "edeposit/marcxml2mods-request"}
    {:marc_xml (slurp (io/file workdir "request" "payload" "oai_marc.xml"))
     :uuid (slurp (io/file workdir "request" "payload" "uuid"))
-    }])
+    }]
+  )
 
 (defn save-marcxml2mods-response
   [[metadata payload]]
-  (let [uuid (-> metadata :headers (get "UUID"))
+  (let [uuid (-> metadata :headers (get "UUID") (.toString))
         workdir (io/file uuid)]
     (log/info "save marcxml2mods response into" workdir)
-
-    (.mkdir (io/file workdir "marcxml2mods"))
-    (.mkdir (io/file workdir "marcxml2mods" "response"))
+    (fs/mkdirs (io/file workdir "marcxml2mods" "response"))
     (let [response-dir (io/file workdir "marcxml2mods" "response")]
       (spit (io/file response-dir "metadata.clj") metadata)
-      (spit (io/file response-dir "payload.bin") payload)
-      )
-    (let [ mods_files (-> payload 
+      (spit (io/file response-dir "payload.bin") payload))
+    (let [ mods_files (-> (String. payload)
                           (json/read-str :key-fn keyword) 
                           :mods_files)]
-      [mods_files workdir])))
-
-
+      [mods_files workdir]))
+  )
 
 (defn parse-mods-files
   "takes strings and returns xml root for each xml string"
@@ -117,12 +148,22 @@
 
 (defn add-urnnbn-to-mods
   [[mods workdir]]
-  (let [urnnbn (slurp (io/file workdir "request" "payload" "urnnbn"))]
-    [(map (fn [one-mods] (m/with-urnnbn-identifier one-mods urnnbn)) mods) workdir]))
+  (if (= :no-dir workdir)
+    [[] :no-dir]
+    (let [urnnbn (slurp (io/file workdir "request" "payload" "urnnbn"))]
+      [(map (fn [one-mods] (m/with-urnnbn-identifier one-mods urnnbn)) mods) workdir])
+    )
+  )
 
 (defn mods->oai_dcs
   [[mods workdir]]
-  [(map m/mods->oai_dc mods) workdir])
+  [(map m/mods->oai_dc mods) workdir]
+  )
+
+(defn with-oai_dcs
+  [[mods workdir]]
+  [[mods workdir] (mods->oai_dcs [mods workdir]) workdir]
+  )
 
 (defn make-package-with-foxml
   [[mods mods-workdir] [oai_dcs oai-workdir] workdir]
@@ -134,8 +175,8 @@
                    :filename (slurp (io/file payload-dir "original" "filename"))
                    :storage_path (slurp (io/file payload-dir "original" "storage_path"))
                    }
-        preview-file {:mimetype (slurp (io/file payload-dir "first-page" "mimetype"))
-                      :filename (slurp (io/file payload-dir "first-page" "filename"))
+        preview-file {:mimetype (slurp (io/file payload-dir "preview-page" "mimetype"))
+                      :filename (slurp (io/file payload-dir "preview-page" "filename"))
                       }
         ]
     (.mkdir result-dir)
@@ -148,7 +189,7 @@
           out-file (io/file result-dir (str uuid ".xml"))
           ]
       (spit out-file (u/emit foxml))
-      (fs/copy-dir (io/file workdir "request" "payload" "first-page") result-dir)
+      (fs/copy-dir (io/file workdir "request" "payload" "preview-page") result-dir)
       (fs/copy (io/file workdir "request" "payload" "edeposit-url.txt") 
                (io/file result-dir "edeposit-url.txt"))
       [uuid workdir])))

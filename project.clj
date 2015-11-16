@@ -1,6 +1,8 @@
 (defproject edeposit.amqp.kramerius "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "AMQP modul for export data from eDeposit into Kramerius. 
+Is is a part of a project eDeposit. The project solves contributing 
+of electronic content for National Library of Czech Republic"
+  :url "https://github.com/edeposit/edeposit.amqp.kramerius"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
@@ -21,6 +23,10 @@
                  [clojurewerkz/serialism "1.3.0"]
                  [clj-ssh "0.5.11"]
                  ]
+  :plugins [
+            [com.cemerick/clojurescript.test "0.3.3"]
+            ]
+
   :main edeposit.amqp.kramerius.core
   :profiles {:dev {:plugins [
                              [quickie "0.4.0"]
