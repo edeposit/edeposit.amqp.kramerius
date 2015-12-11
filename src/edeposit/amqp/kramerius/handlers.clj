@@ -228,13 +228,15 @@
   )
 
 (defn save-response-from-export-to-storage
-  [metadata ^bytes payload]
+  [[metadata payload]]
   (let [msg (json/read-str (String. payload) :key-fn keyword)
-        workdir (io/file (-> metadata :headers (get "UUID")))]
+        workdir (io/file (-> metadata :headers (get "UUID") (.toString)))]
     (if (.exists workdir)
       (let [response-dir (io/file workdir "export-to-storage" "response")]
         (fs/mkdirs (io/file response-dir "payload"))
-        (spit (io/file response-dir "metadata.clj") (s/serialize metadata s/clojure-content-type))
+        (spit (io/file response-dir "metadata.clj") metadata
+              ;(s/serialize metadata s/clojure-content-type)
+              )
         (io/copy payload (io/file response-dir "payload.bin"))
         [msg workdir])
       (do
@@ -285,12 +287,14 @@
         from-path (slurp (io/file request-dir "from"))
         ]
     (fs/mkdirs out-dir)
-    (let [result (scp from-path to-path)]
+    (let [result (scp from-path to-path)
+          sent (.toString (lt/local-now))
+          ]
       (spit (io/file out-dir "result") result)
-      (spit (io/file out-dir "sent") (.toString (lt/local-now)))
+      (spit (io/file out-dir "sent") sent)
+      [workdir :result result :sent sent]
       )
     )
-  [workdir]
   )
 
 (defn parse-and-export [metadata ^bytes payload]

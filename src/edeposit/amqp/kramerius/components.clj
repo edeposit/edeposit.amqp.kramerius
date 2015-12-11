@@ -39,7 +39,7 @@
 (defn from-clojure
   [handler]
   (fn [[metadata payload]]
-     (handler (s/deserialize payload s/clojure-content-type))
+    (handler (s/deserialize payload s/clojure-content-type))
     )
   )
 
@@ -85,6 +85,12 @@
     (handler ch metadata payload)
     (log/info "message ack")
     (lb/ack ch (:delivery-tag metadata))
+    )
+  )
+
+(defn dispatch-by-key [key handler & rest]
+  (fn [ch metadata payload]
+    (println key handler)
     )
   )
 

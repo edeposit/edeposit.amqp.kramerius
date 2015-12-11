@@ -409,7 +409,7 @@
           metadata (-> (slurp "resources/communication-with-storage/response/metadata.clj")
                        read-string
                        (update-in [:headers] assoc "UUID" (.toString workdir)))]
-      (let [ [msg response-workdir] (h/save-response-from-export-to-storage metadata payload)]
+      (let [ [msg response-workdir] (h/save-response-from-export-to-storage [metadata payload])]
         (is (= workdir response-workdir))
         (is (.exists (io/file response-workdir)))
         (is (.exists (io/file response-workdir "export-to-storage")))
@@ -451,7 +451,7 @@
               metadata (-> (slurp "resources/communication-with-storage/response/metadata.clj")
                            read-string
                            (update-in [:headers] assoc "UUID" (.toString workdir)))]
-          (let [ [scp-workdir] (-> (h/save-response-from-export-to-storage metadata payload)
+          (let [ [scp-workdir] (-> (h/save-response-from-export-to-storage [metadata payload])
                                    (h/prepare-scp-to-kramerius
                                     :import-mount "/var/edeposit_import"
                                     :archive-mount "/var/edeposit_archive"
@@ -518,7 +518,7 @@
               metadata (-> (slurp "resources/communication-with-storage/response/metadata.clj")
                            read-string
                            (update-in [:headers] assoc "UUID" (.toString workdir)))]
-          (let [ [scp-workdir] (-> (h/save-response-from-export-to-storage metadata payload)
+          (let [ [scp-workdir] (-> (h/save-response-from-export-to-storage [metadata payload])
                                    (h/prepare-scp-to-kramerius  :import-mount "/var/edeposit_import"
                                                                 :archive-mount "/var/edeposit_archive"
                                                                 :originals-mount "/var/edeposit_originals")
