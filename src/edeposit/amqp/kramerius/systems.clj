@@ -6,8 +6,14 @@
 
 (defn prod-system []
   (component/system-map
-   ;; :kramerius-amqp (new-kramerius-amqp (env :kramerius-amqp-uri)
-   ;;                                     (env :kramerius-amqp-exchange) 
-   ;;                                     (env :kramerius-amqp-qname))
+   :kramerius-amqp (rabbit-mq (env :kramerius-amqp-uri))
+   :marcxml2mods-amqp (rabbit-mq (env :marcxml2mods-amqp-uri))
+   :storage-amqp (rabbit-mq (env :storage-amqp-uri))
+
+   :kramerius-middleware-marcxml2mods (->
+                                       (amqp-middleware 
+                                        )
+                                       (component/using :kramerius-amqp)
+                          )
    )
 )

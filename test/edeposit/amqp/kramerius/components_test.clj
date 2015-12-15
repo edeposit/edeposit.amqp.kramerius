@@ -24,8 +24,7 @@
                        }
           ]
       (let [
-            marcxml2mods (-> (connection :marcxml2mods)
-                             (c/amqp-middleware
+            marcxml2mods (-> (c/amqp-middleware
                               {:exchanges [:convert-to-mods]
                                :queues [
                                         [:kramerius
@@ -33,16 +32,17 @@
                                          :handler (-> h/save-marcxml2mods-response
                                                       c/raw-pass
                                                       c/to-clojure
-                                                      (c/send-result-to (connection :kramerius) :internal
+                                                      (c/send-result-to :kramerius :internal
                                                                         :with-key :marcxml2mods.response)
                                                       c/ack)
                                          ]
                                         ]
                                })
+                             (assoc :rabbit (connection :marcxml2mods))
+                             (assoc :kramerius  (connection :kramerius))
                              (.start))
             
-            storage (-> (connection :storage)
-                        (c/amqp-middleware
+            storage (-> (c/amqp-middleware
                          {:exchanges [:export]
                           :queues [
                                    [:kramerius
@@ -50,16 +50,17 @@
                                     :handler (-> h/save-response-from-export-to-storage
                                                  c/raw-pass
                                                  c/to-clojure
-                                                 (c/send-result-to (connection :kramerius) :internal
+                                                 (c/send-result-to :kramerius :internal
                                                                    :with-key :storage.response)
                                                  c/ack)
                                     ]
                                    ]
                           })
+                        (assoc :rabbit (connection :storage))
+                        (assoc :kramerius  (connection :kramerius))
                         (.start))
             
-            kramerius (-> (connection :kramerius)
-                          (c/amqp-middleware
+            kramerius (-> (c/amqp-middleware
                            {:exchanges [:export-to-kramerius :internal]
                             :queues [[:request-saver
                                       :routing-keys [[:export-to-kramerius :request]]
@@ -67,7 +68,7 @@
                                                          h/request-with-tmpdir)
                                                    c/raw-pass
                                                    c/to-clojure
-                                                   (c/send-result-to (connection :kramerius) :internal
+                                                   (c/send-result-to :kramerius :internal
                                                                      :with-key :request-save.response)
                                                    c/ack)
                                       ]
@@ -76,7 +77,7 @@
                                       :handler (-> h/make-preview-page
                                                    c/from-clojure
                                                    c/to-clojure
-                                                   (c/send-result-to (connection :kramerius) :internal
+                                                   (c/send-result-to :kramerius :internal
                                                                      :with-key :make-preview.response)
                                                    c/ack)
                                       ]
@@ -85,7 +86,7 @@
                                       :handler (-> h/prepare-marcxml2mods-request
                                                    c/from-clojure
                                                    c/to-json
-                                                   (c/send-result-to (connection :marcxml2mods)
+                                                   (c/send-result-to :marcxml2mods
                                                                      :convert-to-mods
                                                                      :with-key :request)
                                                    c/ack)
@@ -96,7 +97,7 @@
                                                          h/parse-mods-files)
                                                    c/from-clojure
                                                    c/to-clojure
-                                                   (c/send-result-to (connection :kramerius) :internal
+                                                   (c/send-result-to :kramerius :internal
                                                                      :with-key :mods.created)
                                                    c/ack)
                                       ]
@@ -107,7 +108,7 @@
                                                          h/with-oai_dcs)
                                                    c/from-clojure
                                                    c/to-clojure
-                                                   (c/send-result-to (connection :kramerius) :internal
+                                                   (c/send-result-to :kramerius :internal
                                                                      :with-key :foxml-package.created)
                                                    c/ack)
                                       ]
@@ -116,7 +117,7 @@
                                       :handler  (-> h/prepare-request-for-export-to-storage
                                                     c/from-clojure
                                                     c/to-json
-                                                    (c/send-result-to (connection :storage) :export
+                                                    (c/send-result-to :storage :export
                                                                       :with-key :request)
                                                     c/ack)
 
@@ -142,21 +143,24 @@
                                                  )
                                                 c/from-clojure
                                                 c/to-clojure
-                                                (c/send-result-to (connection :kramerius) :internal
+                                                (c/send-result-to :kramerius :internal
                                                                   :with-key :scp-package.sent)
                                                 c/ack)
                                       ]
                                      [:rest
                                       :routing-keys [[:internal :scp-package.sent]]
-                                      :handler (fn [ch metadata payload]
+                                      :handler (fn [component ch metadata payload]
                                                  (println "scp-package sent" metadata payload)
                                                  )
                                       ]
                                      ]
                             }
                            )
-                          (.start)
-                          )
+                          (assoc :rabbit       (connection :kramerius))
+                          (assoc :kramerius    (connection :kramerius))
+                          (assoc :marcxml2mods (connection :marcxml2mods))
+                          (assoc :storage      (connection :storage))
+                          (.start))
             ]
         ((->>  {:handle-delivery-fn
                 (fn [ch metadata ^bytes payload]

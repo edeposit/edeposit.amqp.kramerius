@@ -67,10 +67,10 @@
   "creates handler that takes a response,
   serialize it and sends it into exchange with routing key"
   [handler rabbit exchange & {:keys [with-key serializer]}]
-  (fn [ch metadata payload]
+  (fn [component ch metadata payload]
     (let [ [new-payload new-metadata] (handler metadata payload)]
       (log/info "publishing new message ->" exchange with-key)
-      (lb/publish (:ch rabbit)
+      (lb/publish (-> component rabbit :ch)
                   (name exchange)
                   (name with-key)
                   new-payload
@@ -81,15 +81,15 @@
 
 (defn ack
   [handler]
-  (fn [ch metadata payload]
-    (handler ch metadata payload)
+  (fn [component ch metadata payload]
+    (handler component ch metadata payload)
     (log/info "message ack")
     (lb/ack ch (:delivery-tag metadata))
     )
   )
 
 (defn dispatch-by-key [key handler & rest]
-  (fn [ch metadata payload]
+  (fn [component ch metadata payload]
     (println key handler)
     )
   )
@@ -109,10 +109,10 @@
 (defn rabbit-mq [uri]
   (map->Rabbit {:uri uri}))
 
-(defrecord AMQP-Middleware [rabbit definition]
+(defrecord AMQP-Middleware [definition]
   component/Lifecycle
   (start [this]
-    (let [ch (:ch rabbit)]
+    (let [ch (-> this :rabbit :ch)]
       (doseq [exchange (map name (:exchanges definition))]
         (log/info "declaring topic exchange: " exchange)
         (lx/topic ch exchange {:durable true}))
@@ -124,7 +124,7 @@
           (lq/bind ch (name qname) (name exchange) {:routing-key (name routing-key)})))
       (doseq [[qname & {:keys [handler]}] (:queues definition)]
         (log/info "activating handler for queue:" (name qname))
-        (let [consumer (lc/create-default ch {:handle-delivery-fn handler})]
+        (let [consumer (lc/create-default ch {:handle-delivery-fn (partial handler this)})]
           (lb/consume ch (name qname) consumer {:auto-ack false})))
         )
     this
@@ -135,38 +135,5 @@
     )  
   )
 
-(defn amqp-middleware [rabbit definition]
-  (map->AMQP-Middleware {:rabbit rabbit :definition definition}))
-
-(comment
-  (defrecord Kramerius-AMQP [state uri exchange qname channel consumer connection]
-    component/Lifecycle
-    (start [this]
-      (log/info "starting Kramerius AMQP client")
-      (let [ handler (fn [ch metadata payload] 
-                       (handle-delivery this metadata payload)
-                       )
-            conn (lcor/connect {:uri uri})
-            ch (lch/open conn)  ]
-        (log/info "declaring topic exchange: " exchange)
-        (lx/topic ch exchange {:durable true})
-        (lq/declare ch qname {:durable true :auto-delete false})
-        (lq/bind ch qname exchange {:routing-key "request"})
-        (let [consumer (lc/create-default ch {:handle-delivery-fn handler})]
-          (lb/consume ch qname consumer {:auto-ack false})
-          (assoc this :consumer consumer :channel ch :connection conn  :state (atom {}))))
-      )
-    
-    (stop [this]
-      (log/info "stopping Kramerius AMQP client")
-      (lcor/close channel)
-      (lcor/close connection)
-      this
-      )
-    )
-  (defn new-kramerius-amqp [uri exchange qname]
-    (map->Kramerius-AMQP {:uri uri :exchange exchange :qname qname}))
-  )
-
-
-
+(defn amqp-middleware [definition]
+  (map->AMQP-Middleware {:definition definition}))
