@@ -15,7 +15,7 @@
 
 
 
-(when (-> (sh/sh "locate" "rabbitmqctl") :out (.contains "rabbitmqctl"))
+(when (.exists (io/file "/usr" "sbin" "rabbitmqctl"))
   (deftest kramerius-amqp-config-test
     (testing "configure RabbitMQ internal structures"
       (let [ connection {:marcxml2mods (-> "amqp://guest:guest@localhost/marcxml"
