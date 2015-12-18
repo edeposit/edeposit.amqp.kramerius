@@ -1,0 +1,1 @@
+#=(clojure.lang.PersistentArrayMap/create {:headers #=(clojure.lang.PersistentArrayMap/create {"UUID" "/tmp/export-to-kramerius-request-1450433710370-1560703761"}), :content-type "edeposit/export-to-storage-request", :content-encoding "application/json", :persistent true})

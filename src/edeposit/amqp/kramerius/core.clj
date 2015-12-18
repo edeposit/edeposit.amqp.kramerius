@@ -5,72 +5,71 @@
    [edeposit.amqp.kramerius.systems :refer [prod-system]]
    [reloaded.repl :refer [system init start stop go reset]]
    [edeposit.amqp.kramerius.handlers :as h]
-   [jamesmacaulay.zelkova.signal :as z]
    )
   (:gen-class :main true)
 )
 
-(defn ->marcxml2mods
-  [requests]
-  (let [saved (->> requests
-                   (z/map h/request-with-tmpdir)
-                   (z/map h/save-request))]
-    {:saved saved
-     :marcxml2mods-requests (->> saved (z/map h/prepare-marcxml2mods-request))
-     :preview-pages (->> saved (z/map h/make-preview-page))}
-    )
-  )
+;; (defn ->marcxml2mods
+;;   [requests]
+;;   (let [saved (->> requests
+;;                    (z/map h/request-with-tmpdir)
+;;                    (z/map h/save-request))]
+;;     {:saved saved
+;;      :marcxml2mods-requests (->> saved (z/map h/prepare-marcxml2mods-request))
+;;      :preview-pages (->> saved (z/map h/make-preview-page))}
+;;     )
+;;   )
 
-(defn ->storage
-  [marcxml2mods-responses preview-pages]
-  (let [mods (->> marcxml2mods-responses
-                  (z/map h/save-marcxml2mods-response)
-                  (z/map h/parse-mods-files)
-                  (z/map h/add-urnnbn-to-mods))
-        oai_dcs (->> mods (z/map h/mods->oai_dcs))]
-    {:mods mods :oai_dcs oai_dcs})
-  )
+;; (defn ->storage
+;;   [marcxml2mods-responses preview-pages]
+;;   (let [mods (->> marcxml2mods-responses
+;;                   (z/map h/save-marcxml2mods-response)
+;;                   (z/map h/parse-mods-files)
+;;                   (z/map h/add-urnnbn-to-mods))
+;;         oai_dcs (->> mods (z/map h/mods->oai_dcs))]
+;;     {:mods mods :oai_dcs oai_dcs})
+;;   )
 
-(defn inputs->outputs
-  "Takes input observables and transform them into output observables.
-  This is main logic of kramerius.
+;; (defn inputs->outputs
+;;   "Takes input observables and transform them into output observables.
+;;   This is main logic of kramerius.
 
-  It returns 3 channes
-  - requests to convert marcxml2mods
-  - requests to export result to ssh
-  - response messages to send back a results
+;;   It returns 3 channes
+;;   - requests to convert marcxml2mods
+;;   - requests to export result to ssh
+;;   - response messages to send back a results
 
-  3 input channels:
-  - requests to export
-  - marcxml-to-mods responses
-  - ssh export responses
+;;   3 input channels:
+;;   - requests to export
+;;   - marcxml-to-mods responses
+;;   - ssh export responses
 
-  ## Request to export
-  [metadata payload]
+;;   ## Request to export
+;;   [metadata payload]
 
-  ## Marcxml-to-mods response
+;;   ## Marcxml-to-mods response
   
-  ## SSH export response
-  "
-  [request-obs marcxml-to-mods-response-obs ssh-response-obs]
-  (comment
-    (let  [ workdir-obs (->> request-obs
-                             (r/map h/request-with-tmpdir)
-                             (r/map h/save-request))
-           requests-to-marcxml2mods-obs (->> workdir-obs
-                                             (r/map h/prepare-marcxml2mods-request))
-           mods-files-obs (->> marcxml-to-mods-response-obs
-                               (r/map h/save-marcxml2mods-response)
-                               (r/map h/parse-mods-files)
-                               )
-           requests-to-ssh-obs (->> mods-files-obs
-                                    (r/map h/mods->oai_dcs)
-                                    (r/map h/make-package-with-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
-                                    )]
-      { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
-       :requests-to-ssh requests-to-ssh-obs})
-    )
-  )
+;;   ## SSH export response
+;;   "
+;;   [request-obs marcxml-to-mods-response-obs ssh-response-obs]
+;;   (comment
+;;     (let  [ workdir-obs (->> request-obs
+;;                              (r/map h/request-with-tmpdir)
+;;                              (r/map h/save-request))
+;;            requests-to-marcxml2mods-obs (->> workdir-obs
+;;                                              (r/map h/prepare-marcxml2mods-request))
+;;            mods-files-obs (->> marcxml-to-mods-response-obs
+;;                                (r/map h/save-marcxml2mods-response)
+;;                                (r/map h/parse-mods-files)
+;;                                )
+;;            requests-to-ssh-obs (->> mods-files-obs
+;;                                     (r/map h/mods->oai_dcs)
+;;                                     (r/map h/make-package-with-foxml mods-files-obs) ;; zip two observables mods, oai_dcs
+;;                                     )]
+;;       { :requests-to-marcxml2mods-obs requests-to-marcxml2mods-obs
+;;        :requests-to-ssh requests-to-ssh-obs})
+;;     )
+;;   )
 
 (defn -main [& args]
     (let [ [options args banner] 

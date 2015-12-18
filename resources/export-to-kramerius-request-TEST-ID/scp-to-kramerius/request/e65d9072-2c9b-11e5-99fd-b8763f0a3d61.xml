@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<foxml:digitalObject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:foxml="info:fedora/fedora-system:def/foxml#" xsi:schemaLocation="info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd" VERSION="1.1" PID="uuid:e65d9072-2c9b-11e5-99fd-b8763f0a3d61">
+  <foxml:objectProperties>
+    <foxml:property NAME="info:fedora/fedora-system:def/model#label" VALUE="ahoj"/>
+    <foxml:property NAME="info:fedora/fedora-system:def/model#state" VALUE="Active"/>
+    <foxml:property NAME="info:fedora/fedora-system:def/model#ownerId" VALUE="fedoraAdmin"/>
+    <foxml:property NAME="info:fedora/fedora-system:def/model#createdDate" VALUE="2015-12-18T11:15:10.684+01:00"/>
+    <foxml:property NAME="info:fedora/fedora-system:def/view#lastModifiedDate" VALUE="2015-12-18T11:15:10.684+01:00"/>
+  </foxml:objectProperties>
+  <foxml:datastream ID="DC" CONTROL_GROUP="X" STATE="A" VERSIONABLE="true">
+    <foxml:datastreamVersion ID="DC.1" LABEL="Dublin Core Record for this object" CREATED="2015-12-18T11:15:10.684+01:00" MIMETYPE="text/xml" FORMAT_URI="http://www.openarchives.org/OAI/2.0/oai_dc/">
+      <foxml:xmlContent>
+        <oai_dc:dc xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/">
+          <dc:title>Umění programování v UNIXu</dc:title>
+          <dc:creator>Raymond, Eric S.</dc:creator>
+          <dc:subject>UNIX</dc:subject>
+          <dc:subject>operační systémy</dc:subject>
+          <dc:subject>programování</dc:subject>
+          <dc:subject>UNIX</dc:subject>
+          <dc:subject>operating systems</dc:subject>
+          <dc:subject>programming</dc:subject>
+          <dc:subject>004.451.9Unix</dc:subject>
+          <dc:subject>004.451</dc:subject>
+          <dc:subject>004.42</dc:subject>
+          <dc:subject>(035)</dc:subject>
+          <dc:description>Eric S. Raymond</dc:description>
+          <dc:description>Glosář</dc:description>
+          <dc:description>Obsahuje bibliografii, bibliografické odkazy a rejstřík</dc:description>
+          <dc:description>Přeloženo z angličtiny</dc:description>
+          <dc:publisher>Computer Press</dc:publisher>
+          <dc:date>2004</dc:date>
+          <dc:type>text</dc:type>
+          <dc:format>text</dc:format>
+          <dc:format>regular print</dc:format>
+          <dc:format>509 s. : il. ; 23 cm</dc:format>
+          <dc:identifier>urnnbn:urn:nbn:cz:mzk-0005ol</dc:identifier>
+          <dc:identifier>uuid:asd</dc:identifier>
+          <dc:identifier>ccnb:cnb001492461</dc:identifier>
+          <dc:identifier>isbn:80-251-0225-4 (brož.)</dc:identifier>
+          <dc:identifier>oclc:85131856</dc:identifier>
+          <dc:language>cze</dc:language>
+          <dc:language>eng</dc:language>
+          <dc:relation>Art of UNIX programming</dc:relation>
+        </oai_dc:dc>
+      </foxml:xmlContent>
+    </foxml:datastreamVersion>
+  </foxml:datastream>
+  <foxml:datastream ID="BIBLIO_MODS" CONTROL_GROUP="X" STATE="A" VERSIONABLE="true">
+    <foxml:xmlContent>
+      <mods:modsCollection xmlns:mods="http://www.loc.gov/mods/v3">
+        <mods:mods version="3.3">
+          <mods:identifier type="urnnbn">urn:nbn:cz:mzk-0005ol</mods:identifier>
+          <mods:titleInfo>
+            <mods:title>Umění programování v UNIXu</mods:title>
+          </mods:titleInfo>
+          <mods:name usage="primary" type="personal">
+            <mods:namePart>Raymond, Eric S.</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">aut</mods:roleTerm>
+            </mods:role>
+          </mods:name>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:genre authority="marcgt">handbook</mods:genre>
+          <mods:genre authority="czenas">příručky</mods:genre>
+          <mods:genre authority="eczenas">handbooks, manuals, etc.</mods:genre>
+          <mods:genre>electronic volume</mods:genre>
+          <mods:originInfo>
+            <mods:place>
+              <mods:placeTerm authority="marccountry" type="code">xr-</mods:placeTerm>
+            </mods:place>
+            <mods:place>
+              <mods:placeTerm type="text">Brno</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Computer Press</mods:publisher>
+            <mods:dateIssued>2004</mods:dateIssued>
+            <mods:edition>Vyd. 1.</mods:edition>
+            <mods:issuance>single unit</mods:issuance>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm type="code" authority="iso639-2b">cze</mods:languageTerm>
+          </mods:language>
+          <mods:language objectPart="translation">
+            <mods:languageTerm type="code" authority="iso639-2b">eng</mods:languageTerm>
+          </mods:language>
+          <mods:physicalDescription>
+            <mods:form authority="marccategory">text</mods:form>
+            <mods:form authority="marcsmd">regular print</mods:form>
+            <mods:extent>509 s. : il. ; 23 cm</mods:extent>
+          </mods:physicalDescription>
+          <mods:targetAudience authority="marctarget">adult</mods:targetAudience>
+          <mods:note type="statement of responsibility">Eric S. Raymond</mods:note>
+          <mods:note>Glosář</mods:note>
+          <mods:note type="bibliography">Obsahuje bibliografii, bibliografické odkazy a rejstřík</mods:note>
+          <mods:note type="language">Přeloženo z angličtiny</mods:note>
+          <mods:subject authority="czenas">
+            <mods:topic>UNIX</mods:topic>
+          </mods:subject>
+          <mods:subject authority="czenas">
+            <mods:topic>operační systémy</mods:topic>
+          </mods:subject>
+          <mods:subject authority="czenas">
+            <mods:topic>programování</mods:topic>
+          </mods:subject>
+          <mods:subject authority="eczenas">
+            <mods:topic>UNIX</mods:topic>
+          </mods:subject>
+          <mods:subject authority="eczenas">
+            <mods:topic>operating systems</mods:topic>
+          </mods:subject>
+          <mods:subject authority="eczenas">
+            <mods:topic>programming</mods:topic>
+          </mods:subject>
+          <mods:classification authority="udc">004.451.9Unix</mods:classification>
+          <mods:classification authority="udc">004.451</mods:classification>
+          <mods:classification authority="udc">004.42</mods:classification>
+          <mods:classification authority="udc">(035)</mods:classification>
+          <mods:location>
+            <mods:physicalLocation authority="siglaADR">ABA001</mods:physicalLocation>
+          </mods:location>
+          <mods:relatedItem type="otherVersion">
+            <mods:titleInfo>
+              <mods:title>Art of UNIX programming</mods:title>
+            </mods:titleInfo>
+          </mods:relatedItem>
+          <mods:identifier type="uuid">asd</mods:identifier>
+          <mods:identifier type="ccnb">cnb001492461</mods:identifier>
+          <mods:identifier type="isbn">80-251-0225-4 (brož.)</mods:identifier>
+          <mods:identifier type="oclc">85131856</mods:identifier>
+          <mods:recordInfo>
+            <mods:descriptionStandard>aacr</mods:descriptionStandard>
+            <mods:recordContentSource authority="marcorg">BOA001</mods:recordContentSource>
+            <mods:recordCreationDate encoding="marc">041216</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="iso8601">20120509091037.0</mods:recordChangeDate>
+            <mods:recordIdentifier source="CZ-PrNK">cpk20051492461</mods:recordIdentifier>
+            <mods:recordOrigin>machine generated</mods:recordOrigin>
+            <mods:languageOfCataloging>
+              <mods:languageTerm type="code" authority="iso639-2b">cze</mods:languageTerm>
+            </mods:languageOfCataloging>
+          </mods:recordInfo>
+        </mods:mods>
+      </mods:modsCollection>
+    </foxml:xmlContent>
+  </foxml:datastream>
+  <foxml:datastream ID="IMG_FULL" CONTROL_GROUP="E" STATE="A" VERSIONABLE="false">
+    <foxml:datastreamVersion ID="IMG_FULL.0" CREATED="2015-12-18T11:15:10.684+01:00" MIMETYPE="application/pdf">
+      <foxml:contentLocation TYPE="URL" REF="file:///var/edeposit_originals/monografie/01/01-robotandbaby.pdf"/>
+    </foxml:datastreamVersion>
+  </foxml:datastream>
+  <foxml:datastream ID="IMG_PREVIEW" CONTROL_GROUP="E" STATE="A" VERSIONABLE="false">
+    <foxml:datastreamVersion ID="IMG_PREVIEW.0" CREATED="2015-12-18T11:15:10.684+01:00" MIMETYPE="image/jp2">
+      <foxml:contentLocation TYPE="URL" REF="file:///var/edeposit_archive/monografie/01/02/aa-ofsdfasfs/preview-page/robotandbaby_001.jp2"/>
+    </foxml:datastreamVersion>
+  </foxml:datastream>
+</foxml:digitalObject>

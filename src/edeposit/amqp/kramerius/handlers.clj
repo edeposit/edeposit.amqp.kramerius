@@ -13,6 +13,7 @@
             [edeposit.amqp.kramerius.xml.foxml :as f]
             [edeposit.amqp.kramerius.xml.mods :as m]
             [edeposit.amqp.kramerius.xml.utils :as u]
+            [edeposit.amqp.kramerius.email.utils :as e]
             [langohr.basic     :as lb]
             [me.raynes.fs :as fs])
   (:import [org.apache.commons.codec.binary Base64])
@@ -293,6 +294,39 @@
       (spit (io/file out-dir "result") result)
       (spit (io/file out-dir "sent") sent)
       [workdir :result result :sent sent]
+      )
+    )
+  )
+
+(defn prepare-mail-from-workdir
+  [from to]
+  (fn [workdir]
+    (let [subject "eDeposit: balicek k importu do Krameria"
+          from-payload (comp slurp (partial io/file workdir "request" "payload"))
+          body (e/body-with-table "Balicek k importu do Krameria"
+                                  "Dobry den, posilame balicek k importu do Krameria. Udaje o ePublikaci:"
+                                  {:aleph-sysnumber (from-payload "aleph_id")
+                                   :isbn (from-payload "isbn")
+                                   :edeposit-url (from-payload "edeposit-url.txt")
+                                   :is-private (from-payload "is-private")
+                                   :location-at-kramerius (from-payload "location-at-kramerius")
+                                   :urnnbn (from-payload  "urnnbn")
+                                   :uuid (from-payload  "uuid")
+                                   :original-filename (from-payload "original" "filename")
+                                   :original-storage-path (from-payload "original" "storage_path")
+                                   }
+                                  )
+          ]
+      {:from from :to to  :subject subject :body body}
+      )
+    )
+  )
+
+(defn sendmail
+  [mailer]
+  (fn [workdir {:keys [from to subject body] :as args}]
+    (let [result (mailer args)]
+      [workdir result]
       )
     )
   )
