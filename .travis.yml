@@ -9,7 +9,8 @@ services:
   - rabbitmq
 
 before_install:
-  - sudo apt-get install pdftk
-  - sudo apt-get install file
-  - sudo apt-get install zip
-  - sudo apt-get install graphicsmagick
+  - sudo apt-get update -qq
+  - sudo apt-get install -y pdftk
+  - sudo apt-get install -y file
+  - sudo apt-get install -y zip
+  - sudo apt-get install -y graphicsmagick
