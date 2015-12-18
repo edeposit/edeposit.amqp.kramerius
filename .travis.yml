@@ -5,3 +5,11 @@ jdk:
   - openjdk7
   - openjdk6
   - oraclejdk7
+services:
+  - rabbitmq
+
+before_install:
+  - sudo apt-get install pdftk
+  - sudo apt-get install file
+  - sudo apt-get install zip
+  - sudo apt-get install graphicsmagick
