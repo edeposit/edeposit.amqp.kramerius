@@ -11,6 +11,7 @@
             [langohr.consumers :as lc]
             [langohr.exchange :as le]
             [langohr.channel :as lch]
+            [langohr.queue :as lq]
             [clojure.java.shell :as sh]
             )
   )
@@ -33,6 +34,9 @@
                                          (.start))
                            }
               ]
+          (let [ch (-> :marcxml2mods connection :ch)]
+            (lq/declare ch "converter" {:durable true :auto-delete false})
+            (lq/bind ch "converter"  "convert-to-mods" {:routing-key "request" :durable true}))
           (let [
                 marcxml2mods (-> (c/amqp-middleware
                                   {:exchanges [:convert-to-mods]
