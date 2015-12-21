@@ -7,6 +7,7 @@
             [edeposit.amqp.kramerius.handlers :as h]
             [langohr.basic :as lb]
             [langohr.core :as l]
+            [langohr.http :as lh]
             [langohr.consumers :as lc]
             [langohr.exchange :as le]
             [langohr.channel :as lch]
@@ -15,9 +16,10 @@
   )
 
 (when (.exists (io/file "/usr" "sbin" "rabbitmqctl"))
-  (let [ch (-> (l/connect) (lch/open)) ]
-    (doseq [ exchange ["marcxml" "kramerius" "storage"]]
-      (le/declare ch exchange "topic"))
+  (do
+    (doseq [ vhost ["marcxml" "kramerius" "storage"]]
+      (lh/add-vhost vhost)
+      (lh/set-permissions vhost "guest" {:configure ".*" :write ".*" :read ".*"}))
     (deftest kramerius-amqp-config-test
       (testing "configure RabbitMQ internal structures"
         (let [ connection {:marcxml2mods (-> "amqp://guest:guest@localhost/marcxml"
@@ -216,7 +218,6 @@
           )
         )
       )
-    (l/close ch)
     )
   )
 
