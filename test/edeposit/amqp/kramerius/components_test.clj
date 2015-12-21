@@ -36,7 +36,12 @@
               ]
           (let [ch (-> :marcxml2mods connection :ch)]
             (lq/declare ch "converter" {:durable true :auto-delete false})
+            (le/topic ch "convert-to-mods" {:durable true})
             (lq/bind ch "converter"  "convert-to-mods" {:routing-key "request" :durable true}))
+          (let [ch (-> :storage connection :ch)]
+            (lq/declare ch "daemon" {:durable true :auto-delete false})
+            (le/topic ch "export" {:durable true})
+            (lq/bind ch "daemon" "export" {:routing-key "request" :durable true}))
           (let [
                 marcxml2mods (-> (c/amqp-middleware
                                   {:exchanges [:convert-to-mods]
