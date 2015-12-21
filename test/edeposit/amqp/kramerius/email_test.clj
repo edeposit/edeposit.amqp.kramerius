@@ -43,7 +43,7 @@
               ]
           (.exists out-dir)
           (.exists (io/file out-dir "email-with-package.eml"))
-          (let [result #spy/d 
+          (let [result
                 ((h/sendmail (fn [msg] {:code 0, :error :SUCCESS, :message "message sent"})) [workdir email])
                 ;((h/sendmail pc/send-message) [workdir email])
                 ]
