@@ -15,6 +15,7 @@
             [edeposit.amqp.kramerius.xml.utils :as u]
             [edeposit.amqp.kramerius.email.utils :as e]
             [langohr.basic     :as lb]
+            [postal.message :as pm]
             [me.raynes.fs :as fs])
   (:import [org.apache.commons.codec.binary Base64])
   )
@@ -298,33 +299,48 @@
     )
   )
 
-(defn prepare-mail-from-workdir
-  [from to]
+(defn prepare-email-from-workdir
+  [& {:keys [from to]}]
   (fn [workdir]
     (let [subject "eDeposit: balicek k importu do Krameria"
           from-payload (comp slurp (partial io/file workdir "request" "payload"))
-          body (e/body-with-table "Balicek k importu do Krameria"
-                                  "Dobry den, posilame balicek k importu do Krameria. Udaje o ePublikaci:"
-                                  {:aleph-sysnumber (from-payload "aleph_id")
-                                   :isbn (from-payload "isbn")
-                                   :edeposit-url (from-payload "edeposit-url.txt")
-                                   :is-private (from-payload "is-private")
-                                   :location-at-kramerius (from-payload "location-at-kramerius")
-                                   :urnnbn (from-payload  "urnnbn")
-                                   :uuid (from-payload  "uuid")
-                                   :original-filename (from-payload "original" "filename")
-                                   :original-storage-path (from-payload "original" "storage_path")
-                                   }
-                                  )
+          body [ {:type "text/html; charset=utf-8"
+                  :content (e/body-with-table "Balíček k importu do Krameria"
+                                              "Dobrý den, posíláme balíček k importu do Krameria. Údaje o ePublikaci:"
+                                              {:aleph-sysnumber (from-payload "aleph_id")
+                                               :isbn (from-payload "isbn")
+                                               :edeposit-url (from-payload "edeposit-url.txt")
+                                               :is-private (from-payload "is-private")
+                                               :location-at-kramerius (from-payload "location-at-kramerius")
+                                               :urnnbn (from-payload  "urnnbn")
+                                               :uuid (from-payload  "uuid")
+                                               :original-filename (from-payload "original" "filename")
+                                               :original-storage-path (from-payload "original" "storage_path")
+                                               }
+                                              )
+                  }
+                {:type :attachment
+                 :content (io/file workdir (str (from-payload "uuid") ".zip"))
+                 }
+                ]
+          
           ]
       {:from from :to to  :subject subject :body body}
       )
     )
   )
+(defn save-email-at-workdir
+  [[workdir msg]]
+  (let [out-dir (io/file workdir "communication-with-kramerius-administrator")]
+    (fs/mkdirs out-dir)
+    (spit (io/file out-dir "email-with-package.eml") (pm/message->str msg))
+    )
+  [workdir msg]
+  )
 
 (defn sendmail
   [mailer]
-  (fn [workdir {:keys [from to subject body] :as args}]
+  (fn [[workdir {:keys [from to subject body] :as args}]]
     (let [result (mailer args)]
       [workdir result]
       )

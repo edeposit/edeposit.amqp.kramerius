@@ -7,6 +7,7 @@
             [clojure.pprint :as pp]
             [clojure.java.shell :as shell]
             [me.raynes.fs :as fs]
+            [postal.core :as pc]
             )
   )
   
@@ -18,10 +19,10 @@
                   {:uuid "UUID"
                    :isbn "ISBN"}
                   )]
-      (is (.contains result "<h1>Balicek k exportu</h1>"))
-      (is (.contains result "<p>Dobry den, posilame balicek k importu do Krameria</p>"))
-      (is (.contains result "<th>uuid</th><td>UUID</td>"))
-      (is (.contains result "<th>isbn</th><td>ISBN</td>"))
+      (is (re-find #"<h1>Balicek k exportu</h1>" result ))
+      (is (re-find #"<p>Dobry den, posilame balicek k importu do Krameria</p>"  result))
+      (is (re-find #"<th>uuid</th><td>UUID</td>" result ))
+      (is (re-find #"<th>isbn</th><td>ISBN</td>" result ))
       )
     )
   )
@@ -32,10 +33,22 @@
           workdir (io/file "/tmp" (-> name fs/temp-name))
           ]
       (fs/copy-dir (-> name io/resource io/file) workdir)
-      (let [email ((h/prepare-mail-from-workdir "from@edeposit.cz" "to@localhost") workdir)]
-        (is (= "from@edeposit.cz" (:from email)))
-        (is (= "to@localhost" (:to email)))
+      (let [email ((h/prepare-email-from-workdir :from "edeposit@edeposit.cz" :to "stavel.jan@gmail.com")
+                   workdir)]
+        (is (= "edeposit@edeposit.cz" (:from email)))
+        (is (= "stavel.jan@gmail.com" (:to email)))
         (is (= "eDeposit: balicek k importu do Krameria" (:subject email)))
+        (let [out-dir (io/file workdir "communication-with-kramerius-administrator")
+              [_ _] (h/save-email-at-workdir [workdir email])
+              ]
+          (.exists out-dir)
+          (.exists (io/file out-dir "email-with-package.eml"))
+          (let [result #spy/d 
+                ((h/sendmail (fn [msg] {:code 0, :error :SUCCESS, :message "message sent"})) [workdir email])
+                ;((h/sendmail pc/send-message) [workdir email])
+                ]
+            )
+          )
         )
       )
     )

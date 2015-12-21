@@ -33,6 +33,7 @@ of electronic content for National Library of Czech Republic"
                              [quickie "0.4.0"]
                              [spyscope "0.1.5"]
                              [cider/cider-nrepl "0.9.1"]
+                             [refactor-nrepl "1.1.0"]
                              ]}
              :uberjar {:aot :all}
              }

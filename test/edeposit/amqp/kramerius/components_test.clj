@@ -8,14 +8,18 @@
             [langohr.basic :as lb]
             [langohr.core :as l]
             [langohr.consumers :as lc]
+            [langohr.exchange :as le]
+            [langohr.channel :as lch]
             [clojure.java.shell :as sh]
             )
   )
 
-
-
-
 (when (.exists (io/file "/usr" "sbin" "rabbitmqctl"))
+  (let [ch (-> (l/connect) (lch/open)) ]
+    (doseq [ exchange ["marcxml" "kramerius" "storage"]]
+      (le/declare ch exchange "topic"))
+    (l/close ch))
+ 
   (deftest kramerius-amqp-config-test
     (testing "configure RabbitMQ internal structures"
       (let [ connection {:marcxml2mods (-> "amqp://guest:guest@localhost/marcxml"
