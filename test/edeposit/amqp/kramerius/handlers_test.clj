@@ -14,6 +14,7 @@
             [clj-time.local :as lt]
             [clj-time.coerce :as tc]
             [clj-time.core :as t]
+            [postal.core :as pc]
             )
   )
 
@@ -549,3 +550,42 @@
     )
   )
 
+(deftest send-email-test
+  (testing "email from workdir"
+    (let [name "export-to-kramerius-request-TEST-ID"
+          workdir (io/file "/tmp" (-> name fs/temp-name))
+          ]
+      (fs/copy-dir (-> name io/resource io/file) workdir)
+      (let [payload (.getBytes (slurp "resources/communication-with-storage/response/payload.bin"))
+            metadata (-> (slurp "resources/communication-with-storage/response/metadata.clj")
+                         read-string
+                         (update-in [:headers] assoc "UUID" (.toString workdir)))
+            ]
+        (let [make-email (h/make-email :from "edeposit@edeposit.cz" :to "stavel.jan@gmail.com")
+              [_ email] (-> [metadata payload]
+                            h/save-response-from-export-to-storage
+                            (h/prepare-email
+                             :import-mount "/var/edeposit_import"
+                             :archive-mount "/var/edeposit_archive"
+                             :originals-mount "/var/edeposit_originals")
+                            make-email)
+              ]
+          (is (= "edeposit@edeposit.cz" (:from email)))
+          (is (= "stavel.jan@gmail.com" (:to email)))
+          (is (= "eDeposit: balicek k importu do Krameria" (:subject email)))
+          (let [out-dir (io/file workdir "email-for-kramerius")
+                [_ _] (h/save-email-at-workdir [workdir email])
+                ]
+            (.exists out-dir)
+            (.exists (io/file out-dir "email-with-package.eml"))
+            (let [result
+                  ((h/sendmail (fn [msg] {:code 0, :error :SUCCESS, :message "message sent"})) [workdir email])
+                  ;((h/sendmail pc/send-message) [workdir email])
+                  ]
+              )
+            )
+          )
+        )
+      )
+    )
+  )

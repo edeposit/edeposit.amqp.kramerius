@@ -27,29 +27,3 @@
     )
   )
 
-(deftest prepare-email-from-workdir
-  (testing "email from workdir"
-    (let [name "export-to-kramerius-request-TEST-ID"
-          workdir (io/file "/tmp" (-> name fs/temp-name))
-          ]
-      (fs/copy-dir (-> name io/resource io/file) workdir)
-      (let [email ((h/prepare-email-from-workdir :from "edeposit@edeposit.cz" :to "stavel.jan@gmail.com")
-                   workdir)]
-        (is (= "edeposit@edeposit.cz" (:from email)))
-        (is (= "stavel.jan@gmail.com" (:to email)))
-        (is (= "eDeposit: balicek k importu do Krameria" (:subject email)))
-        (let [out-dir (io/file workdir "communication-with-kramerius-administrator")
-              [_ _] (h/save-email-at-workdir [workdir email])
-              ]
-          (.exists out-dir)
-          (.exists (io/file out-dir "email-with-package.eml"))
-          (let [result
-                ((h/sendmail (fn [msg] {:code 0, :error :SUCCESS, :message "message sent"})) [workdir email])
-                ;((h/sendmail pc/send-message) [workdir email])
-                ]
-            )
-          )
-        )
-      )
-    )
-  )

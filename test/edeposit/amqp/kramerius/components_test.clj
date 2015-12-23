@@ -13,6 +13,7 @@
             [langohr.channel :as lch]
             [langohr.queue :as lq]
             [clojure.java.shell :as sh]
+            [postal.core :as pc]
             )
   )
 
@@ -141,6 +142,32 @@
                                                         c/ack)
                                           
                                           
+                                          ]
+                                         [:email
+                                          :routing-keys [[:internal :storage.response]]
+                                          :handler (->
+                                                    (comp
+                                                     (h/sendmail pc/send-message)
+                                                     ;; (h/sendmail (fn [msg]
+                                                     ;;               {:code 0,
+                                                     ;;                :error :SUCCESS,
+                                                     ;;                :message "message sent"}))
+                                                     h/save-email-at-workdir
+                                                     (h/make-email :from "edeposit@edeposit.cz"
+                                                                   :to "stavel.jan@gmail.com")
+                                                     (fn [x] (h/prepare-email
+                                                             x
+                                                             :import-mount "/var/edeposit_import"
+                                                             :archive-mount "/var/edeposit_archive"
+                                                             :originals-mount "/var/edeposit_originals"
+                                                             )
+                                                       )
+                                                     )
+                                                    c/from-clojure
+                                                    c/to-clojure
+                                                    (c/send-result-to :kramerius :internal
+                                                                      :with-key :email-to-kramerius.sent)
+                                                    c/ack)
                                           ]
                                          [:scp
                                           :routing-keys [[:internal :storage.response]]

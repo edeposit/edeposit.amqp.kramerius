@@ -299,7 +299,31 @@
     )
   )
 
-(defn prepare-email-from-workdir
+(defn prepare-email
+  [[{:keys [dir_pointer] :as msg} workdir] & {:keys [import-mount archive-mount originals-mount]}]
+  {:pre [(some? import-mount)
+         (some? archive-mount)
+         (some? originals-mount)
+         ]}
+  (let [uuid (slurp (io/file workdir "request" "payload" "uuid"))]
+    (let [request-dir (io/file workdir "email-for-kramerius" "request")
+          foxml-fname (str uuid ".xml")]
+      (fs/mkdirs request-dir)
+      (spit (io/file workdir "email-for-kramerius" "dir_pointer") dir_pointer)
+      (let [root (-> (io/file workdir uuid foxml-fname)
+                     io/input-stream
+                     x/parse)]
+        (-> root
+            (f/update-rels archive-mount dir_pointer originals-mount)
+            u/emit
+            (io/copy (io/file request-dir foxml-fname)))
+        )
+      )
+    workdir
+    )
+  )
+
+(defn make-email
   [& {:keys [from to]}]
   (fn [workdir]
     (let [subject "eDeposit: balicek k importu do Krameria"
@@ -320,18 +344,19 @@
                                               )
                   }
                 {:type :attachment
-                 :content (io/file workdir (str (from-payload "uuid") ".zip"))
+                 :content (io/file workdir "email-for-kramerius" "request" (str (from-payload "uuid") ".xml"))
                  }
                 ]
           
           ]
-      {:from from :to to  :subject subject :body body}
+      [workdir {:from from :to to  :subject subject :body body}]
       )
     )
   )
+
 (defn save-email-at-workdir
   [[workdir msg]]
-  (let [out-dir (io/file workdir "communication-with-kramerius-administrator")]
+  (let [out-dir (io/file workdir "email-for-kramerius")]
     (fs/mkdirs out-dir)
     (spit (io/file out-dir "email-with-package.eml") (pm/message->str msg))
     )
