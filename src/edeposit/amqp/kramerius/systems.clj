@@ -3,6 +3,7 @@
             [environ.core :refer [env]]
             [edeposit.amqp.kramerius.components :as c]
             [edeposit.amqp.kramerius.handlers :as h]
+            [postal.core :as pc]
             [edeposit.amqp.kramerius.components :refer [amqp-middleware
                                                         rabbit-mq]]))
 
