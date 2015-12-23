@@ -13,10 +13,10 @@
    :marcxml2mods (rabbit-mq (env :marcxml2mods-amqp-uri))
    :storage (rabbit-mq (env :storage-amqp-uri))
    :middleware-marcxml2mods (-> (amqp-middleware
-                                 {:exchanges [:convert-to-mods]
+                                 {:exchanges [:export]
                                   :queues [
                                            [:kramerius
-                                            :routing-keys [[:convert-to-mods :response]]
+                                            :routing-keys [[:export :response]]
                                             :handler (-> h/save-marcxml2mods-response
                                                          c/raw-pass
                                                          c/to-clojure
@@ -27,8 +27,8 @@
                                            ]
                                   }
                                  )
-                                (component/using { :rabbit :marcxml2mods
-                                                   :kramerius :kramerius })
+                                (component/using {:rabbit :marcxml2mods
+                                                  :kramerius :kramerius})
                                 )
    :middleware-storage (-> (amqp-middleware
                             {:exchanges [:export]
@@ -75,7 +75,7 @@
                                                        c/from-clojure
                                                        c/to-json
                                                        (c/send-result-to :marcxml2mods
-                                                                         :convert-to-mods
+                                                                         :export
                                                                          :with-key :request)
                                                        c/ack)
                                           ]
