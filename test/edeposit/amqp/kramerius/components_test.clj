@@ -147,11 +147,11 @@
                                           :routing-keys [[:internal :storage.response]]
                                           :handler (->
                                                     (comp
-                                                     (h/sendmail pc/send-message)
-                                                     ;; (h/sendmail (fn [msg]
-                                                     ;;               {:code 0,
-                                                     ;;                :error :SUCCESS,
-                                                     ;;                :message "message sent"}))
+                                                     ;;(h/sendmail pc/send-message)
+                                                     (h/sendmail (fn [msg]
+                                                                   {:code 0,
+                                                                    :error :SUCCESS,
+                                                                    :message "message sent"}))
                                                      h/save-email-at-workdir
                                                      (h/make-email :from "edeposit@edeposit.cz"
                                                                    :to "stavel.jan@gmail.com")
