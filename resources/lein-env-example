@@ -1,0 +1,10 @@
+{:kramerius-amqp-uri "amqp://guest:guest@localhost/kramerius"
+ :marcxml2mods-amqp-uri "amqp://guest:guest@localhost/marcxml2mods"
+ :storage-amqp-uri "amqp://guest:guest@localhost/storage"
+ :email-to-kramerius-from "edeposit@edeposit.cz"
+ :email-to-kramerius-to "stavel.jan@gmail.com"
+ :import-mount "/var/edeposit_import"
+ :archive-mount "/var/edeposit_archive"
+ :originals-mount "/var/edeposit_originals"
+ :nrepl-port 12345
+}

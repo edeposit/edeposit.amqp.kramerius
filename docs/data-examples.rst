@@ -17,3 +17,10 @@ Importní balíček
 -----------------------------
 
 :download:`export-request.json <../resources/export-request.json>`
+
+
+Konfigurace aplikace
+--------------------------------------
+
+:download:`.lein-env <../resources/lein-env-example>`
+
