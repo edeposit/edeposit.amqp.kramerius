@@ -25,13 +25,27 @@
   (add-hook 'after-save-hook 'restart-app nil t)
 )
 
+(defn workdir-create
+  "Create a temporary file or dir, trying n times before giving up."
+  [basedir prefix suffix]
+  (loop [tries 10]
+    (let [tmp (io/file basedir (fs/temp-name prefix suffix))]
+      (when (pos? tries)
+        (if (fs/mkdirs tmp)
+          tmp
+          (recur (dec tries))))))
+  )
+
 (defn request-with-tmpdir
   "It creates tmpdir and add it to request data"
-  [[metadata payload]]
-  (log/info "received new message")
-  (let [tmpdir (fs/temp-dir "export-to-kramerius-request-")]
-    (log/info "handlers will user dir" (.toString tmpdir))
-    [[metadata payload] tmpdir])
+  [workdir-prefix]
+  (fn
+    [[metadata payload]]
+    (log/info "received new message")
+    (let [tmpdir (workdir-create workdir-prefix "export-to-kramerius-request-" "")]
+      (log/info "handlers will user dir" (.toString tmpdir))
+      [[metadata payload] tmpdir])
+    )
   )
 
 (defn save-request

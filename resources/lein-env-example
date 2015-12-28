@@ -6,5 +6,5 @@
  :import-mount "/var/edeposit_import"
  :archive-mount "/var/edeposit_archive"
  :originals-mount "/var/edeposit_originals"
- :nrepl-port 12345
+ :vardir "/opt/edeposit/var/export-to-kramerius"
 }

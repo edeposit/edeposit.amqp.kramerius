@@ -17,7 +17,7 @@
             )
   )
 
-(when (.exists (io/file "/usr" "sbin" "rabbitmqctl"))
+(when (not (.exists (io/file "/usr" "sbin" "rabbitmqctl")))
   (do
     (doseq [ vhost ["marcxml" "kramerius" "storage"]]
       (lh/add-vhost vhost)
@@ -85,7 +85,7 @@
                                 :queues [[:request-saver
                                           :routing-keys [[:export-to-kramerius :request]]
                                           :handler (-> (comp h/save-request
-                                                             h/request-with-tmpdir)
+                                                             (h/request-with-tmpdir "/tmp"))
                                                        c/raw-pass
                                                        c/to-clojure
                                                        (c/send-result-to :kramerius :internal

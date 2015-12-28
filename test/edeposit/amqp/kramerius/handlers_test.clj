@@ -20,13 +20,15 @@
 
 (deftest with-tmpdir-test
   (testing "add tmpdir to request"
-    (let [payload (slurp "resources/export-request.json")
-          [[metadata payload] tmpdir] (-> [:no-metadata payload]
-                                          h/request-with-tmpdir)]
+    (let [testdir (fs/temp-dir "testdir-")
+          payload (slurp "resources/export-request.json")
+          [[metadata payload] tmpdir] ((h/request-with-tmpdir (.toString testdir)) [:no-metadata payload])]
       (is (.exists tmpdir))
       (is (= metadata :no-metadata))
       (is (= payload (slurp "resources/export-request.json")))
+      (is (.contains (.toString tmpdir) (.toString testdir)))
       (fs/delete-dir tmpdir)
+      (fs/delete-dir testdir)
       )
     )
   )

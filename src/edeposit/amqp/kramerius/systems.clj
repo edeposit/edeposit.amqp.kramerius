@@ -53,7 +53,7 @@
                                 :queues [[:request-saver
                                           :routing-keys [[:export-to-kramerius :request]]
                                           :handler (-> (comp h/save-request
-                                                             h/request-with-tmpdir)
+                                                             (h/request-with-tmpdir (env :vardir)))
                                                        c/raw-pass
                                                        c/to-clojure
                                                        (c/send-result-to :kramerius :internal
