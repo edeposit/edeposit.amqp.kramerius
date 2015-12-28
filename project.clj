@@ -1,4 +1,4 @@
-(defproject edeposit.amqp.kramerius "1.0.1"
+(defproject edeposit.amqp.kramerius "1.0.2"
   :description "AMQP modul for export data from eDeposit into Kramerius. 
 Is is a part of a project eDeposit. The project solves contributing 
 of electronic content for National Library of Czech Republic"
@@ -11,11 +11,11 @@ of electronic content for National Library of Czech Republic"
                  [org.clojure/tools.logging "0.3.1"]
                  [commons-codec/commons-codec "1.10"]
                  [clj-time "0.11.0"]
+		 [com.stuartsierra/component "0.3.1"]
                  [me.raynes/fs "1.4.6"]
                  [org.clojure/data.json "0.2.5"]
                  [environ "1.0.0"]
                  [hiccup "1.0.5"]
-                 [reloaded.repl "0.1.0"]
                  [org.clojure/tools.cli "0.3.1"]
                  [danlentz/clj-uuid "0.1.6"]
                  [org.clojure/data.xml "0.0.8"]

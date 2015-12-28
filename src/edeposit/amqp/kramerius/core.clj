@@ -1,10 +1,9 @@
 (ns edeposit.amqp.kramerius.core
   (:require
    [clojure.tools.cli :as cli]
-   [clojure.tools.nrepl.server :refer (start-server)]
    [edeposit.amqp.kramerius.systems :refer [prod-system]]
-   [reloaded.repl :refer [system init start stop go reset]]
    [edeposit.amqp.kramerius.handlers :as h]
+   [com.stuartsierra.component :as component]
    )
   (:gen-class :main true)
 )
@@ -21,9 +20,7 @@
       (System/exit 0)
       )
     (when (:amqp options)
-      (defonce server (start-server :port 12345))
-      (reloaded.repl/set-init! prod-system)
-      (go)
+      (component/start (prod-system))
       )
     )
   )
