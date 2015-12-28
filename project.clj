@@ -29,7 +29,6 @@ of electronic content for National Library of Czech Republic"
             ]
 
   :main edeposit.amqp.kramerius.core
-  :aot [edeposit.amqp.kramerius.core]
   :profiles {:dev {:plugins [
                              [quickie "0.4.0"]
                              [spyscope "0.1.5"]
