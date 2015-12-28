@@ -1,4 +1,4 @@
-(defproject edeposit.amqp.kramerius "1.0.0"
+(defproject edeposit.amqp.kramerius "1.0.1"
   :description "AMQP modul for export data from eDeposit into Kramerius. 
 Is is a part of a project eDeposit. The project solves contributing 
 of electronic content for National Library of Czech Republic"
