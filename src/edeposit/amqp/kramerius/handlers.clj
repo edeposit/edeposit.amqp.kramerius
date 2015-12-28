@@ -371,6 +371,14 @@
       )
     )
   )
+(defn msg-for-client
+  [[workdir result]]
+  (let [metadata {:headers {"UUID" (-> workdir (io/file "request" "payload" "uuid") slurp)}
+                  :content-type "edeposit/export-to-kramerius-response" }
+        payload "export to Kramerius succeeded"]
+    [metadata payload]
+    )
+  )
 
 (defn parse-and-export [metadata ^bytes payload]
   (let [msg (json/read-str (String. payload) :key-fn keyword) 

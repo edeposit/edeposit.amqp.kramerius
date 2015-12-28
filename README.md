@@ -6,9 +6,26 @@ A Clojure library designed to ... well, that part is up to you.
 
 [Full documentation](http://edeposit-amqp-kramerius.readthedocs.org/en/latest/)
 
+## Configuration
+
+All configuration is at:
+
+- resources/lein-env-example
+- src/edeposit/amqp/kramerius/systems.clj
+
 ## Usage
 
-FIXME
+- create vhost =kramerius= at RabbitMQ
+- set permissions to this vhost 
+- do those steps:
+
+```
+edeposit@edeposit-test:~/src> git clone https://github.com/edeposit/edeposit.amqp.kramerius.git
+edeposit@edeposit-test:~/src> cd edeposit.amqp.kramerius/
+edeposit@edeposit-test:~/src/edeposit.amqp.kramerius> cp resources/lein-env-example .lein-env
+edeposit@edeposit-test:~/src/edeposit.amqp.kramerius> vim resources/lein-env-example .lein-env
+edeposit@edeposit-test:~/src/edeposit.amqp.kramerius> lein run -- --amqp
+```
 
 ## License
 

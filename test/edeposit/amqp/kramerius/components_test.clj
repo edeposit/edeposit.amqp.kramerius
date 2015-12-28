@@ -140,8 +140,6 @@
                                                         (c/send-result-to :storage :export
                                                                           :with-key :request)
                                                         c/ack)
-                                          
-                                          
                                           ]
                                          [:email
                                           :routing-keys [[:internal :storage.response]]
@@ -169,36 +167,47 @@
                                                                       :with-key :email-to-kramerius.sent)
                                                     c/ack)
                                           ]
-                                         [:scp
-                                          :routing-keys [[:internal :storage.response]]
-                                          :handler (->
-                                                    (comp
-                                                     (fn [x]
-                                                       (h/scp-to-kramerius x {:scp (fn [from-path to-path]
-                                                                                     (str from-path
-                                                                                          "->"
-                                                                                          to-path))})
+                                         [:notify-client
+                                          :routing-keys [[:internal :email-to-kramerius.sent]]
+                                          :handler (-> h/msg-for-client
+                                                       c/from-clojure
+                                                       c/to-json
+                                                       (c/notify-client :kramerius :export-to-kramerius
+                                                                        :with-key :response)
+                                                       c/ack
+                                                       c/remove-workdir
                                                        )
-                                                     (fn [x] (h/prepare-scp-to-kramerius
-                                                             x
-                                                             :import-mount "/var/edeposit_import"
-                                                             :archive-mount "/var/edeposit_archive"
-                                                             :originals-mount "/var/edeposit_originals"
-                                                             )
-                                                       )
-                                                     )
-                                                    c/from-clojure
-                                                    c/to-clojure
-                                                    (c/send-result-to :kramerius :internal
-                                                                      :with-key :scp-package.sent)
-                                                    c/ack)
-                                          ]
-                                         [:rest
-                                          :routing-keys [[:internal :scp-package.sent]]
-                                          :handler (fn [component ch metadata payload]
-                                                     (println "scp-package sent" metadata payload)
-                                                     )
-                                          ]
+                                          ]                                         
+                                         ;; [:scp
+                                         ;;  :routing-keys [[:internal :storage.response]]
+                                         ;;  :handler (->
+                                         ;;            (comp
+                                         ;;             (fn [x]
+                                         ;;               (h/scp-to-kramerius x {:scp (fn [from-path to-path]
+                                         ;;                                             (str from-path
+                                         ;;                                                  "->"
+                                         ;;                                                  to-path))})
+                                         ;;               )
+                                         ;;             (fn [x] (h/prepare-scp-to-kramerius
+                                         ;;                     x
+                                         ;;                     :import-mount "/var/edeposit_import"
+                                         ;;                     :archive-mount "/var/edeposit_archive"
+                                         ;;                     :originals-mount "/var/edeposit_originals"
+                                         ;;                     )
+                                         ;;               )
+                                         ;;             )
+                                         ;;            c/from-clojure
+                                         ;;            c/to-clojure
+                                         ;;            (c/send-result-to :kramerius :internal
+                                         ;;                              :with-key :scp-package.sent)
+                                         ;;            c/ack)
+                                         ;;  ]
+                                         ;; [:rest
+                                         ;;  :routing-keys [[:internal :scp-package.sent]]
+                                         ;;  :handler (fn [component ch metadata payload]
+                                         ;;             (println "scp-package sent" metadata payload)
+                                         ;;             )
+                                         ;;  ]
                                          ]
                                 }
                                )
