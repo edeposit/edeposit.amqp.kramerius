@@ -6,6 +6,15 @@ A Clojure library designed to ... well, that part is up to you.
 
 [Full documentation](http://edeposit-amqp-kramerius.readthedocs.org/en/latest/)
 
+## External utilities
+
+There are some external programs for this module to work:
+
+- pdftk
+- gm
+
+It is necessary to install them.
+
 ## Configuration
 
 All configuration is at:
