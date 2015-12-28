@@ -589,3 +589,19 @@
       )
     )
   )
+
+(deftest notify-client-message-test
+  (testing "create notification message for a client"
+    (let [name "export-to-kramerius-request-TEST-ID"
+          workdir (io/file "/tmp" (-> name fs/temp-name))]
+      (fs/copy-dir (-> name io/resource io/file) workdir)
+      (let [[new-metadata new-payload] (h/msg-for-client [workdir "some result"])]
+        (is (= "e65d9072-2c9b-11e5-99fd-b8763f0a3d61"
+               (-> new-metadata :headers (get "UUID"))))
+        (is (= "edeposit/export-to-kramerius-response"
+               (-> new-metadata :content-type)))
+        (is (= "export to Kramerius succeeded" new-payload))
+        )
+      )
+    )
+  )

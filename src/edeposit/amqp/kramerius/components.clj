@@ -4,6 +4,7 @@
             [clojurewerkz.serialism.core :as s]
             [com.stuartsierra.component :as component]
             [edeposit.amqp.kramerius.handlers :as h]
+            [me.raynes.fs :as fs]
             [langohr.basic     :as lb]
             [langohr.channel :as lch]
             [langohr.consumers :as lc]
@@ -31,7 +32,7 @@
   [handler]
   (fn [metadata payload]
     (let [new-payload (handler [metadata payload])]
-      [(s/serialize new-payload s/clojure-content-type) nil]
+      [metadata (s/serialize new-payload s/clojure-content-type)]
       )
     )
   )
@@ -56,8 +57,8 @@
   [handler]
   (fn [metadata payload]
     (let [[new-metadata new-payload] (handler [metadata payload])]
-      [(s/serialize new-payload s/json-utf8-content-type)
-       (assoc new-metadata :content-encoding "application/json")
+      [(assoc new-metadata :content-encoding "application/json")
+       (s/serialize new-payload s/json-utf8-content-type)
        ]
       )
     )
@@ -68,13 +69,14 @@
   serialize it and sends it into exchange with routing key"
   [handler rabbit exchange & {:keys [with-key serializer]}]
   (fn [component ch metadata payload]
-    (let [ [new-payload new-metadata] (handler metadata payload)]
+    (let [[new-metadata new-payload] (handler metadata payload)]
       (log/info "publishing new message ->" exchange with-key)
       (lb/publish (-> component rabbit :ch)
                   (name exchange)
                   (name with-key)
                   new-payload
                   (assoc new-metadata :persistent true))
+      [new-metadata new-payload]
       )
     )
   )
@@ -82,15 +84,40 @@
 (defn ack
   [handler]
   (fn [component ch metadata payload]
-    (handler component ch metadata payload)
-    (log/info "message ack")
-    (lb/ack ch (:delivery-tag metadata))
+    (let [[new-metadata new-payload] (handler component ch metadata payload)]
+      (log/info "message ack")
+      (lb/ack ch (:delivery-tag metadata))
+      [new-metadata new-payload]
+      )
     )
   )
 
-(defn dispatch-by-key [key handler & rest]
+(defn remove-workdir
+  [handler]
   (fn [component ch metadata payload]
-    (println key handler)
+    (let [[new-metadata new-payload] (handler component ch metadata payload)]
+      (let [workdir (-> metadata :headers (get "UUID") (.toString) io/file)]
+        (log/info "workdir removed" workdir)
+        (fs/delete-dir workdir)
+        [new-metadata new-payload]
+        )
+      )
+    )
+  )
+
+(defn notify-client
+  [handler rabbit exchange & {:keys [with-key msg]}]
+  (fn [component ch metadata payload]
+    (let [[new-metadata new-payload] (handler metadata payload)]
+      (log/info "notify client about export result")
+      (lb/publish (-> component rabbit :ch)
+                  (name exchange)
+                  (name with-key)
+                  new-payload
+                  (assoc new-metadata :persistent true)
+                  )
+      [new-metadata new-payload]
+      )
     )
   )
 
